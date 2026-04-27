@@ -13,16 +13,28 @@ export default function Products({ store, products }) {
 
   const sendWhatsAppOrder = () => {
     const total = selectedProduct.price * customerInfo.quantity;
-    const text = `🛍️ *New Order Received!* 🛍️\n\n` +
-                 `🏪 *Store:* ${store.name}\n` +
-                 `📦 *Product:* ${selectedProduct.name}\n` +
-                 `🔢 *Quantity:* ${customerInfo.quantity}\n` +
-                 `💰 *Total Amount:* ₹${total.toLocaleString()}\n\n` +
-                 `👤 *Customer Details:* \n` +
-                 `• *Name:* ${customerInfo.name}\n` +
-                 `• *Phone:* ${customerInfo.phone}\n` +
-                 `• *Address:* ${customerInfo.address}\n\n` +
-                 `✅ _Please confirm this order to proceed!_`;
+    const storeAddress = store.address || 'Online Store';
+    
+    const text = `🌟 *ORDER CONFIRMATION* 🌟\n` +
+                 `--------------------------------------\n` +
+                 `👋 *Welcome to ${store.name}*\n\n` +
+                 `📍 *Store Address:*\n${storeAddress}\n` +
+                 `📞 *Contact:* ${store.phone}\n\n` +
+                 `--------------------------------------\n` +
+                 `📦 *ORDER DETAILS:*\n` +
+                 `--------------------------------------\n` +
+                 `🔹 *Product:* ${selectedProduct.name}\n` +
+                 `🔹 *Price:* ₹${selectedProduct.price.toLocaleString()}\n` +
+                 `🔹 *Quantity:* ${customerInfo.quantity}\n\n` +
+                 `💰 *TOTAL AMOUNT:* ₹${total.toLocaleString()}\n` +
+                 `--------------------------------------\n\n` +
+                 `👤 *CUSTOMER INFO:*\n` +
+                 `• *Name:* ${customerInfo.name || 'N/A'}\n` +
+                 `• *Address:* ${customerInfo.address || 'N/A'}\n` +
+                 `• *Phone:* ${customerInfo.phone}\n\n` +
+                 `--------------------------------------\n` +
+                 `🙏 *Thank you for shopping with us!*\n` +
+                 `✅ _Please reply to confirm and track your order._`;
                  
     const encodedText = encodeURIComponent(text);
     const whatsappUrl = `https://wa.me/${store.phone.replace(/\D/g, '')}?text=${encodedText}`;
