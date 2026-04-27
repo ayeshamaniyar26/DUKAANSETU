@@ -200,9 +200,10 @@ export default function ProfilePage() {
                                         {[
                                             { label: 'Trade License', key: 'businessProofUrl', name: 'businessProof', icon: 'fa-file-signature' },
                                             { label: 'Shop Front', key: 'shopFrontUrl', name: 'shopFront', icon: 'fa-store-alt' },
+                                            { label: 'Shop Interior', key: 'shopInteriorUrl', name: 'shopInterior', icon: 'fa-couch' },
                                             { label: 'Owner ID Proof', key: 'ownerIdProofUrl', name: 'ownerIdProof', icon: 'fa-id-card' }
                                         ].map((doc) => (
-                                            <div className="col-md-4" key={doc.key}>
+                                            <div className="col-md-3 col-sm-6" key={doc.key}>
                                                 <div className="upload-hub-card text-center p-32">
                                                     <div className="mb-20">
                                                         <i className={`fas ${doc.icon} text-primary opacity-50 fa-3x`}></i>
