@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma';
 import Link from 'next/link';
 import AdminHeader from '@/components/AdminHeader';
 
+export const dynamic = "force-dynamic";
+
 export default async function StoreDetails({ params }) {
     const { id } = await params;
 

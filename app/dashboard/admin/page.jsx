@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma';
 import ApprovalTable from './ApprovalTable';
 import AdminHeader from '@/components/AdminHeader';
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminDashboard() {
   const menuItems = [
     { name: 'Overview', icon: 'fas fa-chart-line', link: '/dashboard/admin' },

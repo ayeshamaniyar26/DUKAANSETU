@@ -17,6 +17,8 @@ import Brands from '@/components/Brands';
 import SearchPopup from '@/components/SearchPopup';
 import Offcanvas from '@/components/Offcanvas';
 
+export const dynamic = "force-dynamic";
+
 export default async function ShopPage({ params }) {
   const { slug } = await params;
 

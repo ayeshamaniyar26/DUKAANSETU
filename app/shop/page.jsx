@@ -4,6 +4,8 @@ import Footer from '@/components/Footer';
 import Banner from '@/components/Banner';
 import Link from 'next/link';
 
+export const dynamic = "force-dynamic";
+
 export default async function ShopListPage() {
   const stores = await prisma.store.findMany();
 
