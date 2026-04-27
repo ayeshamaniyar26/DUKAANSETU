@@ -24,7 +24,8 @@ export default function OwnerDashboard() {
 
   async function fetchData() {
     setLoading(true);
-    const res = await getDashboardData();
+    const storeId = localStorage.getItem('storeId');
+    const res = await getDashboardData(storeId);
     setData(res);
     setLoading(false);
   }

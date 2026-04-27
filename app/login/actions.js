@@ -16,9 +16,9 @@ export async function login(formData) {
 
   // Simple session logic - in production use JWT or NextAuth
   if (user.role === 'ADMIN') {
-    redirect('/dashboard/admin');
+    return { success: true, role: 'ADMIN', userId: user.id, redirect: '/dashboard/admin' };
   } else if (user.role === 'OWNER') {
-    redirect('/dashboard/owner');
+    return { success: true, role: 'OWNER', userId: user.id, storeId: user.storeId, redirect: '/dashboard/owner' };
   }
 
   return { error: 'Unknown role' };

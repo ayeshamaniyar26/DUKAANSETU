@@ -25,7 +25,9 @@ export default async function ShopPage({ params }) {
   const store = await prisma.store.findUnique({
     where: { slug: slug },
     include: {
-      products: true,
+      products: {
+        where: { isDeleted: false }
+      },
       categories: true
     }
   });

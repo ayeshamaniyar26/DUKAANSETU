@@ -14,6 +14,9 @@ export default function ProductsPage() {
     const [loading, setLoading] = useState(true);
     const [sourceType, setSourceType] = useState('url'); // 'url' or 'upload'
     const [previewUrl, setPreviewUrl] = useState(null);
+    const [sortBy, setSortBy] = useState('createdAt');
+    const [sortOrder, setSortOrder] = useState('desc');
+    const [categoryFilter, setCategoryFilter] = useState('');
 
     const menuItems = [
         { name: 'Dashboard', icon: 'fas fa-home', link: '/dashboard/owner' },
@@ -27,18 +30,27 @@ export default function ProductsPage() {
 
     useEffect(() => {
         fetchProducts();
-    }, [currentPage]);
+    }, [currentPage, sortBy, sortOrder, categoryFilter]);
 
     async function fetchProducts() {
         setLoading(true);
-        const { products, total } = await getProducts(currentPage, pageSize);
+        const storeId = localStorage.getItem('storeId');
+        const { products, total } = await getProducts({ 
+            page: currentPage, 
+            pageSize, 
+            sortBy, 
+            sortOrder, 
+            category: categoryFilter,
+            storeId 
+        });
         setProducts(products);
         setTotal(total);
         setLoading(false);
     }
 
     const handleExport = async () => {
-        const allProducts = await getAllProductsForExport();
+        const storeId = localStorage.getItem('storeId');
+        const allProducts = await getAllProductsForExport(storeId);
         if (allProducts.length === 0) {
             Swal.fire('No Data', 'There are no products to export.', 'info');
             return;
@@ -149,11 +161,13 @@ export default function ProductsPage() {
             didOpen: () => Swal.showLoading()
         });
 
+        const storeId = localStorage.getItem('storeId');
+
         if (editingProduct) {
             formData.append('id', editingProduct.id);
             await updateProduct(formData);
         } else {
-            await createProduct(formData);
+            await createProduct(formData, storeId);
         }
         
         setIsModalOpen(false);
@@ -177,7 +191,22 @@ export default function ProductsPage() {
                             <h1 className="fw-bold mb-8" style={{ fontSize: '32px', color: '#111827', letterSpacing: '-0.025em' }}>Inventory Management</h1>
                             <p className="text-muted mb-0" style={{ fontSize: '16px' }}>Manage your store catalog, import products in bulk, or export your inventory.</p>
                         </div>
-                        <div className="d-flex gap-12">
+                        <div className="d-flex align-items-center gap-12">
+                            <select 
+                                className="form-select shadow-sm" 
+                                style={{ borderRadius: '12px', width: '180px', fontSize: '14px', height: '45px' }}
+                                onChange={(e) => {
+                                    const [field, order] = e.target.value.split(':');
+                                    setSortBy(field);
+                                    setSortOrder(order);
+                                }}
+                            >
+                                <option value="createdAt:desc">Newest First</option>
+                                <option value="name:asc">Name (A-Z)</option>
+                                <option value="name:desc">Name (Z-A)</option>
+                                <option value="price:asc">Price (Low-High)</option>
+                                <option value="price:desc">Price (High-Low)</option>
+                            </select>
                             <button className="btn btn-white shadow-sm border-0 px-20 py-12" onClick={handleExport} 
                                 style={{ borderRadius: '12px', fontWeight: '600', backgroundColor: '#fff', fontSize: '14px', border: '1px solid #E5E7EB !important' }}>
                                 <i className="fas fa-file-export me-8 text-success"></i> Export Data

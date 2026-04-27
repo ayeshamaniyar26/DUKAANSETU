@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { login } from './actions';
+import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 
 export default function LoginPage() {
@@ -40,6 +41,8 @@ export default function LoginPage() {
         });
     };
 
+    const router = useRouter();
+
     const handleLogin = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
@@ -53,6 +56,10 @@ export default function LoginPage() {
         const result = await login(formData);
         if (result?.error) {
             Swal.fire('Error', result.error, 'error');
+        } else if (result?.success) {
+            localStorage.setItem('userId', result.userId);
+            if (result.storeId) localStorage.setItem('storeId', result.storeId);
+            router.push(result.redirect);
         }
     };
 

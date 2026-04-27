@@ -26,7 +26,8 @@ export default function LedgerPage() {
 
     async function fetchData() {
         setLoading(true);
-        const ledgerData = await getLedgerData();
+        const storeId = localStorage.getItem('storeId');
+        const ledgerData = await getLedgerData(storeId);
         setData(ledgerData);
         setLoading(false);
     }
@@ -34,7 +35,8 @@ export default function LedgerPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const res = await recordPayment(formData);
+        const storeId = localStorage.getItem('storeId');
+        const res = await recordPayment(formData, storeId);
         if (res.success) {
             Swal.fire('Success', 'Transaction recorded successfully', 'success');
             setIsModalOpen(false);

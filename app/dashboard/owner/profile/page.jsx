@@ -26,7 +26,8 @@ export default function ProfilePage() {
 
     async function fetchData() {
         setLoading(true);
-        const res = await getStoreSettings();
+        const storeId = localStorage.getItem('storeId');
+        const res = await getStoreSettings(storeId);
         setData(res);
         setLoading(false);
     }

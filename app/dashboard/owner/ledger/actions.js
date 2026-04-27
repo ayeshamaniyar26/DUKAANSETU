@@ -5,14 +5,14 @@ import { revalidatePath } from 'next/cache';
 // Using the same default store for testing as products
 const DEFAULT_STORE_SLUG = 'kirana-global';
 
-async function getStore() {
+async function getStore(storeId) {
   return await prisma.store.findUnique({
-    where: { slug: DEFAULT_STORE_SLUG }
+    where: storeId ? { id: storeId } : { slug: DEFAULT_STORE_SLUG }
   });
 }
 
-export async function getLedgerData() {
-  const store = await getStore();
+export async function getLedgerData(storeId) {
+  const store = await getStore(storeId);
   if (!store) return { entries: [], stats: { daily: 0, monthly: 0, yearly: 0, totalReceivable: 0 } };
 
   const entries = await prisma.ledger.findMany({
@@ -68,8 +68,8 @@ export async function getLedgerData() {
   };
 }
 
-export async function recordPayment(formData) {
-  const store = await getStore();
+export async function recordPayment(formData, storeId) {
+  const store = await getStore(storeId);
   if (!store) throw new Error('Store not found');
 
   const amount = parseFloat(formData.get('amount'));

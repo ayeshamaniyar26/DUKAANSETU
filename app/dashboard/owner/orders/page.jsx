@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
-import { getOrdersData, updateOrderStatus, createOrder, updateOrder, deleteOrder } from './actions';
+import { getOrders, updateOrderStatus, createOrder, updateOrder, deleteOrder } from './actions';
 import Swal from 'sweetalert2';
 import Link from 'next/link';
 
@@ -29,7 +29,8 @@ export default function OrdersPage() {
 
   async function fetchData() {
     setLoading(true);
-    const orderData = await getOrdersData();
+    const storeId = localStorage.getItem('storeId');
+    const orderData = await getOrders(storeId);
     setData(orderData);
     setLoading(false);
   }
@@ -81,12 +82,14 @@ export default function OrdersPage() {
     const formData = new FormData(e.target);
     formData.append('items', JSON.stringify(items.filter(i => i.name)));
     
+    const storeId = localStorage.getItem('storeId');
+    
     let res;
     if (editingOrder) {
         formData.append('id', editingOrder.id);
         res = await updateOrder(formData);
     } else {
-        res = await createOrder(formData);
+        res = await createOrder(formData, storeId);
     }
 
     if (res.success) {

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
-import { getCustomersData } from './actions';
+import { getCustomersData, createCustomer } from './actions';
 import Link from 'next/link';
 
 export default function CustomersPage() {
@@ -27,7 +27,8 @@ export default function CustomersPage() {
 
     async function fetchData() {
         setLoading(true);
-        const res = await getCustomersData();
+        const storeId = localStorage.getItem('storeId');
+        const res = await getCustomersData(storeId);
         setData(res);
         setLoading(false);
     }
@@ -35,7 +36,8 @@ export default function CustomersPage() {
     async function handleSubmit(e) {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const res = await createCustomer(formData);
+        const storeId = localStorage.getItem('storeId');
+        const res = await createCustomer(formData, storeId);
         if (res.success) {
             setIsModalOpen(false);
             fetchData();

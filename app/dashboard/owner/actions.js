@@ -1,11 +1,9 @@
 'use server';
 import prisma from '@/lib/prisma';
-const DEFAULT_STORE_SLUG = 'kirana-global';
-
-export async function getDashboardData() {
+export async function getDashboardData(storeId) {
     try {
         const store = await prisma.store.findUnique({
-            where: { slug: DEFAULT_STORE_SLUG }
+            where: storeId ? { id: storeId } : { slug: 'kirana-global' }
         });
 
         if (!store) return null;

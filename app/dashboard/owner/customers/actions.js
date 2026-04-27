@@ -1,11 +1,9 @@
 'use server';
 import prisma from '@/lib/prisma';
-const DEFAULT_STORE_SLUG = 'kirana-global';
-
-export async function getCustomersData() {
+export async function getCustomersData(storeId) {
     try {
         const store = await prisma.store.findUnique({
-            where: { slug: DEFAULT_STORE_SLUG }
+            where: storeId ? { id: storeId } : { slug: 'kirana-global' }
         });
 
         if (!store) return { customers: [], stats: { total: 0, active: 0 } };
@@ -73,15 +71,17 @@ export async function getCustomersData() {
     }
 }
 
-export async function createCustomer(formData) {
+export async function createCustomer(formData, storeId) {
     try {
         const store = await prisma.store.findUnique({
-            where: { slug: DEFAULT_STORE_SLUG }
+            where: storeId ? { id: storeId } : { slug: 'kirana-global' }
         });
 
         const name = formData.get('name');
         const phone = formData.get('phone');
         const address = formData.get('address');
+
+        if (!name || !phone) throw new Error('Name and Phone are required');
 
         await prisma.customer.upsert({
             where: { 
@@ -93,6 +93,9 @@ export async function createCustomer(formData) {
             update: { name, address },
             create: { name, phone, address, storeId: store.id }
         });
+
+        const { revalidatePath } = require('next/cache');
+        revalidatePath('/dashboard/owner/customers');
 
         return { success: true };
     } catch (error) {

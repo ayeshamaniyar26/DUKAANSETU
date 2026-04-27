@@ -4,13 +4,16 @@ import { revalidatePath } from 'next/cache';
 import fs from 'fs/promises';
 import path from 'path';
 
-// In a real app, you'd get the storeId from the session/auth
-const DEFAULT_STORE_SLUG = 'kirana-global';
-
-async function getStore() {
-  return await prisma.store.findUnique({
-    where: { slug: DEFAULT_STORE_SLUG }
-  });
+// TODO: Replace with actual session auth
+async function getStore(storeIdFromSession) {
+  if (storeIdFromSession) {
+    return await prisma.store.findUnique({
+      where: { id: storeIdFromSession }
+    });
+  }
+  
+  // Fallback for now if no session is passed
+  return await prisma.store.findFirst();
 }
 
 async function handleFileUpload(file) {
@@ -27,29 +30,33 @@ async function handleFileUpload(file) {
   return `/uploads/${filename}`;
 }
 
-export async function getProducts(page = 1, pageSize = 10) {
-  const store = await getStore();
+export async function getProducts({ page = 1, pageSize = 10, sortBy = 'createdAt', sortOrder = 'desc', category = '', storeId }) {
+  const store = await getStore(storeId);
   if (!store) return { products: [], total: 0 };
   
   const skip = (page - 1) * pageSize;
   
+  const where = {
+    storeId: store.id,
+    isDeleted: false,
+    ...(category && { category })
+  };
+
   const [products, total] = await Promise.all([
     prisma.product.findMany({
-      where: { storeId: store.id },
-      orderBy: { createdAt: 'desc' },
+      where,
+      orderBy: { [sortBy]: sortOrder },
       skip,
       take: pageSize
     }),
-    prisma.product.count({
-      where: { storeId: store.id }
-    })
+    prisma.product.count({ where })
   ]);
 
   return { products, total };
 }
 
-export async function createProduct(formData) {
-  const store = await getStore();
+export async function createProduct(formData, storeIdFromSession) {
+  const store = await getStore(storeIdFromSession);
   if (!store) throw new Error('Store not found');
 
   const name = formData.get('name');
@@ -57,10 +64,22 @@ export async function createProduct(formData) {
   const price = parseFloat(formData.get('price'));
   const category = formData.get('category');
   
-  const file = formData.get('file');
-  let image = formData.get('image'); // URL from text input
+  // Duplicate Check
+  const existing = await prisma.product.findFirst({
+    where: {
+      name: { equals: name, mode: 'insensitive' },
+      storeId: store.id,
+      isDeleted: false
+    }
+  });
 
-  // If a file was uploaded, use it instead of the URL
+  if (existing) {
+    throw new Error(`Product with name "${name}" already exists in your store.`);
+  }
+
+  const file = formData.get('file');
+  let image = formData.get('image');
+
   const uploadedPath = await handleFileUpload(file);
   if (uploadedPath) {
     image = uploadedPath;
@@ -113,8 +132,9 @@ export async function updateProduct(formData) {
 }
 
 export async function deleteProduct(id) {
-  const product = await prisma.product.delete({
-    where: { id }
+  const product = await prisma.product.update({
+    where: { id },
+    data: { isDeleted: true }
   });
 
   const store = await prisma.store.findUnique({ where: { id: product.storeId } });
@@ -122,12 +142,15 @@ export async function deleteProduct(id) {
   revalidatePath(`/shop/${store.slug}`);
 }
 
-export async function getAllProductsForExport() {
-  const store = await getStore();
+export async function getAllProductsForExport(storeIdFromSession) {
+  const store = await getStore(storeIdFromSession);
   if (!store) return [];
   
   return await prisma.product.findMany({
-    where: { storeId: store.id },
+    where: { 
+      storeId: store.id,
+      isDeleted: false
+    },
     orderBy: { createdAt: 'desc' }
   });
 }

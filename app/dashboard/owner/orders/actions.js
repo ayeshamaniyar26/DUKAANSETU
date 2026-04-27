@@ -4,14 +4,14 @@ import { revalidatePath } from 'next/cache';
 
 const DEFAULT_STORE_SLUG = 'kirana-global';
 
-async function getStore() {
+async function getStore(storeId) {
   return await prisma.store.findUnique({
-    where: { slug: DEFAULT_STORE_SLUG }
+    where: storeId ? { id: storeId } : { slug: DEFAULT_STORE_SLUG }
   });
 }
 
-export async function getOrdersData() {
-  const store = await getStore();
+export async function getOrders(storeId) {
+  const store = await getStore(storeId);
   if (!store) return { orders: [], stats: { daily: 0, monthly: 0, yearly: 0, totalOrders: 0 } };
 
   const orders = await prisma.order.findMany({
@@ -56,8 +56,8 @@ export async function getOrdersData() {
   };
 }
 
-export async function createOrder(formData) {
-    const store = await getStore();
+export async function createOrder(formData, storeId) {
+    const store = await getStore(storeId);
     if (!store) throw new Error('Store not found');
 
     const customerName = formData.get('customerName');
