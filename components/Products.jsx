@@ -37,7 +37,9 @@ export default function Products({ store, products }) {
                  `✅ _Please reply to confirm and track your order._`;
                  
     const encodedText = encodeURIComponent(text);
-    const whatsappUrl = `https://wa.me/${store.phone.replace(/\D/g, '')}?text=${encodedText}`;
+    const rawPhone = store.phone.replace(/\D/g, '');
+    const formattedPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
+    const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodedText}`;
     window.open(whatsappUrl, '_blank');
     setIsModalOpen(false);
   };
