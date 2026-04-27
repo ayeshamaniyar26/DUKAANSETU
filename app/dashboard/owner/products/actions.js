@@ -31,16 +31,19 @@ async function handleFileUpload(file) {
 }
 
 export async function getProducts({ page = 1, pageSize = 10, sortBy = 'createdAt', sortOrder = 'desc', category = '', storeId }) {
-  const store = await getStore(storeId);
-  if (!store) return { products: [], total: 0 };
-  
   const skip = (page - 1) * pageSize;
   
   const where = {
-    storeId: store.id,
+    storeId: storeId || undefined,
     isDeleted: false,
     ...(category && { category })
   };
+
+  // If no storeId, we fallback to finding the first store (compatibility)
+  if (!storeId) {
+    const store = await prisma.store.findFirst();
+    if (store) where.storeId = store.id;
+  }
 
   const [products, total] = await Promise.all([
     prisma.product.findMany({

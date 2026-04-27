@@ -8,47 +8,41 @@ export async function getDashboardData(storeId) {
 
         if (!store) return null;
 
-        // 1. Total Products
-        const productCount = await prisma.product.count({
-            where: { storeId: store.id }
-        });
-
-        // 2. Today's Orders
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const orderCountToday = await prisma.order.count({
-            where: { 
-                storeId: store.id,
-                createdAt: { gte: today }
-            }
-        });
 
-        // 3. Outstanding Udhar (Sum of Ledger)
-        // CREDIT = Money given by store to customer (Udhar)
-        // DEBIT = Money paid by customer to store
-        const ledgerEntries = await prisma.ledger.findMany({
-            where: { storeId: store.id }
-        });
-        
-        let outstandingUdhar = 0;
-        ledgerEntries.forEach(entry => {
-            if (entry.type === 'CREDIT') outstandingUdhar += entry.amount;
-            if (entry.type === 'DEBIT') outstandingUdhar -= entry.amount;
-        });
+        // Run all queries in parallel for speed
+        const [
+            productCount, 
+            orderCountToday, 
+            creditSum, 
+            debitSum, 
+            recentOrders, 
+            recentLedger
+        ] = await Promise.all([
+            prisma.product.count({ where: { storeId: store.id, isDeleted: false } }),
+            prisma.order.count({ where: { storeId: store.id, createdAt: { gte: today } } }),
+            prisma.ledger.aggregate({
+                where: { storeId: store.id, type: 'CREDIT' },
+                _sum: { amount: true }
+            }),
+            prisma.ledger.aggregate({
+                where: { storeId: store.id, type: 'DEBIT' },
+                _sum: { amount: true }
+            }),
+            prisma.order.findMany({
+                where: { storeId: store.id },
+                take: 5,
+                orderBy: { createdAt: 'desc' }
+            }),
+            prisma.ledger.findMany({
+                where: { storeId: store.id },
+                take: 5,
+                orderBy: { createdAt: 'desc' }
+            })
+        ]);
 
-        // 4. Recent Sales
-        const recentOrders = await prisma.order.findMany({
-            where: { storeId: store.id },
-            take: 5,
-            orderBy: { createdAt: 'desc' }
-        });
-
-        // 5. Recent Ledger
-        const recentLedger = await prisma.ledger.findMany({
-            where: { storeId: store.id },
-            take: 5,
-            orderBy: { createdAt: 'desc' }
-        });
+        const outstandingUdhar = (creditSum._sum.amount || 0) - (debitSum._sum.amount || 0);
 
         return {
             storeName: store.name,
