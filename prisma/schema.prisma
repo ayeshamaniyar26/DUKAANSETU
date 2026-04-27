@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  logo        String?
+  accentColor String    @default("#2E7D32")
+  category    String?
+  bannerImage String?
+  phone       String
+  planType    String    @default("FREE")
+  products    Product[]
+  categories  Category[]
+  orders      Order[]
+  customers   Customer[]
+  ledger      Ledger[]
+  status      String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  
+  // New Registration Fields
+  address     String?
+  city        String?
+  state       String?
+  pincode     String?
+  latitude    Float?
+  longitude   Float?
+  businessType String?
+  licenseType  String?
+  businessProofUrl String?
+  shopFrontUrl     String?
+  shopInteriorUrl  String?
+  ownerIdProofUrl  String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  image       String?
+  category    String?
+  storeId     String
+  store       Store    @relation(fields: [storeId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Category {
+  id      String @id @default(cuid())
+  name    String
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id])
+
+  @@unique([name, storeId])
+}
+
+model Order {
+  id           String   @id @default(cuid())
+  customerName String
+  phone        String
+  address      String
+  totalAmount  Float
+  status       String   @default("PENDING")
+  storeId      String
+  store        Store    @relation(fields: [storeId], references: [id])
+  items        String // JSON string of items
+  createdAt    DateTime @default(now())
+}
+
+model Customer {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String
+  address     String?
+  storeId     String
+  store       Store    @relation(fields: [storeId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([phone, storeId])
+}
+
+model Ledger {
+  id          String   @id @default(cuid())
+  amount      Float
+  type        String // CREDIT or DEBIT
+  description String
+  storeId     String
+  store       Store    @relation(fields: [storeId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model User {
+  id        String @id @default(cuid())
+  email     String @unique
+  firstName String?
+  lastName  String?
+  password  String
+  role      String @default("OWNER") // ADMIN, OWNER, MANAGER
+  storeId   String?
+}
