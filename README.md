@@ -4,7 +4,7 @@
 
 # 🛍️ DukaanSetu — Your Digital Bridge to Customers
 
-**The ultimate multi-tenant SaaS platform for Indian shopkeepers.**  
+**The ultimate multi-tenant PaaS platform for Indian shopkeepers.**  
 Launch your online storefront with WhatsApp ordering and Digital Ledger in minutes.
 
 [![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-dukaansetu--xi.vercel.app-4f46e5?style=for-the-badge)](https://dukaansetu-xi.vercel.app/)
@@ -12,7 +12,6 @@ Launch your online storefront with WhatsApp ordering and Digital Ledger in minut
 [![React](https://img.shields.io/badge/React-19.2.4-61dafb?style=for-the-badge&logo=react)](https://react.dev/)
 [![Prisma](https://img.shields.io/badge/Prisma-ORM-2d3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed_on-Vercel-000000?style=for-the-badge&logo=vercel)](https://vercel.com/)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 </div>
 
@@ -80,39 +79,74 @@ Mobile-first design using **Inter + Outfit** Google Fonts, custom CSS design tok
 | 🥦 Kirana King | Kirana/Grocery | Hubballi, Karnataka | [Visit Store](https://dukaansetu-xi.vercel.app/shop/kirana-king) |
 
 ---
-
 ## 🖼️ App Screenshots
 
-
 ### 🏠 Homepage — Platform Landing
-![Homepage](public/images/screenshots/homepage.png)
+![Homepage](public/images/screenshots/images/home.png)
 
 ### 🛍️ Shops Discovery Page
-![Shops Page](public/images/screenshots/shops.png)
+![Shops Page](public/images/screenshots/images/shops.png)
 
-### 🧾 Individual Store Storefront
-![Store Page](public/images/screenshots/store.png)
-
-### 🔐 Merchant Login
-![Login](public/images/screenshots/login.png)
+### ✨ Platform Features
+![Features](public/images/screenshots/images/feature_products.png)
 
 ### 📝 Merchant Registration
-![Register](public/images/screenshots/register.png)
+![Register](public/images/screenshots/images/register.png)
 
-### 📊 Owner Dashboard
-![Owner Dashboard](public/images/screenshots/owner-dashboard.png)
+### 🔐 Merchant Login
+*(No login screenshot found — add if available)*
+
+### 🏪 Store Storefront — Kirana King
+![Store](public/images/screenshots/images/kirana_store_1.png)
 
 ### 📦 Product Inventory Manager
-![Products](public/images/screenshots/products.png)
+![Products](public/images/screenshots/images/kirana_store_products_2.png)
 
-### 📒 Udhar Ledger
-![Ledger](public/images/screenshots/ledger.png)
+### ➕ Add New Product
+![Add Product](public/images/screenshots/images/kirana_store_add_products_3.png)
 
 ### 🛒 Orders Panel
-![Orders](public/images/screenshots/orders.png)
+![Orders](public/images/screenshots/images/kirana_orders_4.png)
 
-### 🧑‍💼 Admin Dashboard
-![Admin](public/images/screenshots/admin.png)
+### 📋 Manual Order Entry
+![Manual Orders](public/images/screenshots/images/kirana_manual_orders_5.png)
+
+### 📒 Udhar Ledger
+![Ledger](public/images/screenshots/images/kirana_udhar_6.png)
+
+### ➕ Udhar Entry
+![Udhar Entry](public/images/screenshots/images/kirana_udhar_entry_7.png)
+
+### 👥 Customer Database
+![Customers](public/images/screenshots/images/kirana_customers_8.png)
+
+### ➕ Customer Entry
+![Customer Entry](public/images/screenshots/images/kirana_customers_entry_9.png)
+
+### ⚙️ Store Profile & Settings
+![Profile](public/images/screenshots/images/kirana_profile_10.png)
+
+### 📲 WhatsApp Order Confirmation
+![Order Confirmation](public/images/screenshots/images/order_confirmation.png)
+
+### 🧑‍💼 Admin Dashboard — Homepage
+![Admin Home](public/images/screenshots/images/admin_homepage.png)
+
+### 📊 Admin Platform Stats
+![Admin Platform](public/images/screenshots/images/admin_platform.png)
+
+### 🔍 Admin Store Views
+![Admin Views](public/images/screenshots/images/admin_views.png)
+
+### ℹ️ About Section
+![About](public/images/screenshots/images/about.png)
+
+### 📬 Contact Page
+![Contact](public/images/screenshots/images/contact.png)
+
+### 📝 Contact Form
+![Contact Info](public/images/screenshots/images/contact_info.png)
+
 
 ---
 
@@ -230,8 +264,6 @@ node prisma/seed.js
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — your platform is live!
-
 ### Available Scripts
 
 ```bash
@@ -294,22 +326,6 @@ DATABASE_URL="postgresql://user:password@host:5432/dukaansetu"
 | ⏱️ Platform Uptime | 99.9% |
 | 🌍 Service Coverage | Pan India |
 
----
-
-## 🤝 Contributing
-
-Contributions are welcome!
-
-```bash
-# Fork → Branch → Commit → PR
-
-git checkout -b feature/your-feature
-git commit -m "feat: your feature description"
-git push origin feature/your-feature
-# Open a Pull Request on GitHub
-```
-
-Please keep PRs focused and follow the existing code style.
 
 ---
 
