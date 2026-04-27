@@ -6,12 +6,15 @@ import AdminHeader from '@/components/AdminHeader';
 export const dynamic = "force-dynamic";
 
 export default async function StoreDetails({ params }) {
-    const { id } = await params;
+    const resolvedParams = await params;
+    const id = resolvedParams.id;
 
     const store = await prisma.store.findUnique({
         where: { id },
         include: {
-            products: true
+            products: {
+                where: { isDeleted: false }
+            }
         }
     });
 
@@ -122,48 +125,46 @@ export default async function StoreDetails({ params }) {
                                             <label className="text-muted small fw-bold text-uppercase d-block mb-2">License Type</label>
                                             <p className="mb-0 fw-bold bg-light p-2 px-3 rounded">{store.licenseType}</p>
                                         </div>
-                                        <div className="col-md-3 col-6">
-                                            <label className="text-muted small fw-bold text-uppercase d-block mb-2">Business Proof</label>
-                                            <div className="doc-preview bg-light rounded d-flex align-items-center justify-content-center overflow-hidden" style={{height: '120px', border: '1px solid #eee'}}>
-                                                {store.businessProofUrl ? (
-                                                    <a href={store.businessProofUrl} target="_blank" rel="noopener noreferrer">
-                                                        <img src={store.businessProofUrl} alt="Business Proof" style={{width: '100%', height: '100%', objectFit: 'cover'}} 
-                                                            onError={(e) => { e.target.outerHTML = '<i class="fas fa-file-invoice fa-2x text-muted"></i>'; }} />
-                                                    </a>
-                                                ) : <span className="text-muted small">N/A</span>}
-                                            </div>
-                                        </div>
-                                        <div className="col-md-3 col-6">
-                                            <label className="text-muted small fw-bold text-uppercase d-block mb-2">Shop Front</label>
-                                            <div className="doc-preview bg-light rounded d-flex align-items-center justify-content-center overflow-hidden" style={{height: '120px', border: '1px solid #eee'}}>
-                                                {store.shopFrontUrl ? (
-                                                    <a href={store.shopFrontUrl} target="_blank" rel="noopener noreferrer">
-                                                        <img src={store.shopFrontUrl} alt="Shop Front" style={{width: '100%', height: '100%', objectFit: 'cover'}} />
-                                                    </a>
-                                                ) : <span className="text-muted small">N/A</span>}
-                                            </div>
-                                        </div>
-                                        <div className="col-md-3 col-6">
-                                            <label className="text-muted small fw-bold text-uppercase d-block mb-2">Shop Interior</label>
-                                            <div className="doc-preview bg-light rounded d-flex align-items-center justify-content-center overflow-hidden" style={{height: '120px', border: '1px solid #eee'}}>
-                                                {store.shopInteriorUrl ? (
-                                                    <a href={store.shopInteriorUrl} target="_blank" rel="noopener noreferrer">
-                                                        <img src={store.shopInteriorUrl} alt="Shop Interior" style={{width: '100%', height: '100%', objectFit: 'cover'}} />
-                                                    </a>
-                                                ) : <span className="text-muted small">N/A</span>}
-                                            </div>
-                                        </div>
-                                        <div className="col-md-3 col-6">
-                                            <label className="text-muted small fw-bold text-uppercase d-block mb-2">Owner ID</label>
-                                            <div className="doc-preview bg-light rounded d-flex align-items-center justify-content-center overflow-hidden" style={{height: '120px', border: '1px solid #eee'}}>
-                                                {store.ownerIdProofUrl ? (
-                                                    <a href={store.ownerIdProofUrl} target="_blank" rel="noopener noreferrer">
-                                                        <img src={store.ownerIdProofUrl} alt="Owner ID" style={{width: '100%', height: '100%', objectFit: 'cover'}} 
-                                                            onError={(e) => { e.target.outerHTML = '<i class="fas fa-id-card fa-2x text-muted"></i>'; }} />
-                                                    </a>
-                                                ) : <span className="text-muted small">N/A</span>}
-                                            </div>
-                                        </div>
+                                         <div className="col-md-3 col-6">
+                                             <label className="text-muted small fw-bold text-uppercase d-block mb-2">Business Proof</label>
+                                             <div className="doc-preview bg-light rounded d-flex align-items-center justify-content-center overflow-hidden" style={{height: '120px', border: '1px solid #eee'}}>
+                                                 {store.businessProofUrl ? (
+                                                     <a href={store.businessProofUrl} target="_blank" rel="noopener noreferrer">
+                                                         <img src={store.businessProofUrl} alt="Business Proof" style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+                                                     </a>
+                                                 ) : <span className="text-muted small">N/A</span>}
+                                             </div>
+                                         </div>
+                                         <div className="col-md-3 col-6">
+                                             <label className="text-muted small fw-bold text-uppercase d-block mb-2">Shop Front</label>
+                                             <div className="doc-preview bg-light rounded d-flex align-items-center justify-content-center overflow-hidden" style={{height: '120px', border: '1px solid #eee'}}>
+                                                 {store.shopFrontUrl ? (
+                                                     <a href={store.shopFrontUrl} target="_blank" rel="noopener noreferrer">
+                                                         <img src={store.shopFrontUrl} alt="Shop Front" style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+                                                     </a>
+                                                 ) : <span className="text-muted small">N/A</span>}
+                                             </div>
+                                         </div>
+                                         <div className="col-md-3 col-6">
+                                             <label className="text-muted small fw-bold text-uppercase d-block mb-2">Shop Interior</label>
+                                             <div className="doc-preview bg-light rounded d-flex align-items-center justify-content-center overflow-hidden" style={{height: '120px', border: '1px solid #eee'}}>
+                                                 {store.shopInteriorUrl ? (
+                                                     <a href={store.shopInteriorUrl} target="_blank" rel="noopener noreferrer">
+                                                         <img src={store.shopInteriorUrl} alt="Shop Interior" style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+                                                     </a>
+                                                 ) : <span className="text-muted small">N/A</span>}
+                                             </div>
+                                         </div>
+                                         <div className="col-md-3 col-6">
+                                             <label className="text-muted small fw-bold text-uppercase d-block mb-2">Owner ID</label>
+                                             <div className="doc-preview bg-light rounded d-flex align-items-center justify-content-center overflow-hidden" style={{height: '120px', border: '1px solid #eee'}}>
+                                                 {store.ownerIdProofUrl ? (
+                                                     <a href={store.ownerIdProofUrl} target="_blank" rel="noopener noreferrer">
+                                                         <img src={store.ownerIdProofUrl} alt="Owner ID" style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+                                                     </a>
+                                                 ) : <span className="text-muted small">N/A</span>}
+                                             </div>
+                                         </div>
                                     </div>
                                 </div>
                             </div>

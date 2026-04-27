@@ -14,7 +14,6 @@ async function getStore(storeId) {
   });
 }
 
-
 export async function getProducts({ page = 1, pageSize = 10, sortBy = 'createdAt', sortOrder = 'desc', category = '', storeId }) {
   if (!storeId) return { products: [], total: 0 };
   
@@ -25,137 +24,169 @@ export async function getProducts({ page = 1, pageSize = 10, sortBy = 'createdAt
     ...(category && { category })
   };
 
-  const [products, total] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      orderBy: { [sortBy]: sortOrder },
-      skip,
-      take: pageSize
-    }),
-    prisma.product.count({ where })
-  ]);
+  try {
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        orderBy: { [sortBy]: sortOrder },
+        skip,
+        take: pageSize
+      }),
+      prisma.product.count({ where })
+    ]);
 
-  return { products, total };
+    return { products, total };
+  } catch (error) {
+    console.error('getProducts error:', error);
+    return { products: [], total: 0 };
+  }
 }
 
 export async function createProduct(formData, storeId) {
-  const store = await getStore(storeId);
-  if (!store) throw new Error('Store context lost');
+  try {
+    const store = await getStore(storeId);
+    if (!store) return { error: 'Store context lost' };
 
-  const name = formData.get('name');
-  const description = formData.get('description');
-  const price = parseFloat(formData.get('price'));
-  const category = formData.get('category');
-  
-  // Duplicate Check
-  const existing = await prisma.product.findFirst({
-    where: {
-      name: { equals: name, mode: 'insensitive' },
-      storeId: store.id,
-      isDeleted: false
+    const name = formData.get('name');
+    const description = formData.get('description');
+    const price = parseFloat(formData.get('price'));
+    const category = formData.get('category');
+    
+    // Duplicate Check
+    const existing = await prisma.product.findFirst({
+      where: {
+        name: { equals: name, mode: 'insensitive' },
+        storeId: store.id,
+        isDeleted: false
+      }
+    });
+
+    if (existing) {
+      return { error: `A product named "${name}" already exists in this store.` };
     }
-  });
 
-  if (existing) {
-    throw new Error(`A product named "${name}" already exists in this store.`);
-  }
+    const file = formData.get('file');
+    let image = formData.get('image');
 
-  const file = formData.get('file');
-  let image = formData.get('image');
-
-  const uploadedPath = await handleFileUpload(file);
-  if (uploadedPath) {
-    image = uploadedPath;
-  }
-
-  await prisma.product.create({
-    data: {
-      name,
-      description,
-      price,
-      image: image || '',
-      category: category || 'Uncategorized',
-      storeId: store.id
+    const uploadedPath = await handleFileUpload(file);
+    if (uploadedPath) {
+      image = uploadedPath;
     }
-  });
 
-  revalidatePath('/dashboard/owner/products');
-  revalidatePath(`/shop/${store.slug}`);
+    await prisma.product.create({
+      data: {
+        name,
+        description,
+        price,
+        image: image || '',
+        category: category || 'Uncategorized',
+        storeId: store.id
+      }
+    });
+
+    revalidatePath('/dashboard/owner/products');
+    revalidatePath(`/shop/${store.slug}`);
+    return { success: true };
+  } catch (error) {
+    console.error('createProduct error:', error);
+    return { error: error.message || 'Failed to create product' };
+  }
 }
 
 export async function updateProduct(formData) {
-  const id = formData.get('id');
-  const name = formData.get('name');
-  const description = formData.get('description');
-  const price = parseFloat(formData.get('price'));
-  const category = formData.get('category');
-  
-  const file = formData.get('file');
-  let image = formData.get('image');
+  try {
+    const id = formData.get('id');
+    const name = formData.get('name');
+    const description = formData.get('description');
+    const price = parseFloat(formData.get('price'));
+    const category = formData.get('category');
+    
+    const file = formData.get('file');
+    let image = formData.get('image');
 
-  const uploadedPath = await handleFileUpload(file);
-  if (uploadedPath) {
-    image = uploadedPath;
-  }
-
-  const product = await prisma.product.update({
-    where: { id },
-    data: {
-      name,
-      description,
-      price,
-      image,
-      category
+    const uploadedPath = await handleFileUpload(file);
+    if (uploadedPath) {
+      image = uploadedPath;
     }
-  });
 
-  const store = await prisma.store.findUnique({ where: { id: product.storeId } });
-  revalidatePath('/dashboard/owner/products');
-  revalidatePath(`/shop/${store.slug}`);
+    const product = await prisma.product.update({
+      where: { id },
+      data: {
+        name,
+        description,
+        price,
+        image,
+        category
+      }
+    });
+
+    const store = await prisma.store.findUnique({ where: { id: product.storeId } });
+    revalidatePath('/dashboard/owner/products');
+    revalidatePath(`/shop/${store.slug}`);
+    return { success: true };
+  } catch (error) {
+    console.error('updateProduct error:', error);
+    return { error: error.message || 'Failed to update product' };
+  }
 }
 
 export async function deleteProduct(id) {
-  const product = await prisma.product.update({
-    where: { id },
-    data: { isDeleted: true }
-  });
+  try {
+    const product = await prisma.product.update({
+      where: { id },
+      data: { isDeleted: true }
+    });
 
-  const store = await prisma.store.findUnique({ where: { id: product.storeId } });
-  revalidatePath('/dashboard/owner/products');
-  revalidatePath(`/shop/${store.slug}`);
+    const store = await prisma.store.findUnique({ where: { id: product.storeId } });
+    revalidatePath('/dashboard/owner/products');
+    revalidatePath(`/shop/${store.slug}`);
+    return { success: true };
+  } catch (error) {
+    console.error('deleteProduct error:', error);
+    return { error: 'Failed to delete product' };
+  }
 }
 
 export async function getAllProductsForExport(storeId) {
-  const store = await getStore(storeId);
-  if (!store) return [];
-  
-  return await prisma.product.findMany({
-    where: { 
-      storeId: store.id,
-      isDeleted: false
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+  try {
+    const store = await getStore(storeId);
+    if (!store) return [];
+    
+    return await prisma.product.findMany({
+      where: { 
+        storeId: store.id,
+        isDeleted: false
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  } catch (error) {
+    return [];
+  }
 }
 
 export async function bulkCreateProducts(productsList, storeId) {
-  const store = await getStore(storeId);
-  if (!store) throw new Error('Store not found');
+  try {
+    const store = await getStore(storeId);
+    if (!store) return { error: 'Store not found' };
 
-  const formattedProducts = productsList.map(p => ({
-    name: p.name,
-    description: p.description || '',
-    price: parseFloat(p.price) || 0,
-    image: p.image || '',
-    category: p.category || 'Uncategorized',
-    storeId: store.id
-  }));
+    const formattedProducts = productsList.map(p => ({
+      name: p.name,
+      description: p.description || '',
+      price: parseFloat(p.price) || 0,
+      image: p.image || '',
+      category: p.category || 'Uncategorized',
+      storeId: store.id
+    }));
 
-  await prisma.product.createMany({
-    data: formattedProducts
-  });
+    await prisma.product.createMany({
+      data: formattedProducts
+    });
 
-  revalidatePath('/dashboard/owner/products');
-  revalidatePath(`/shop/${store.slug}`);
-  return { success: true, count: formattedProducts.length };
+    revalidatePath('/dashboard/owner/products');
+    revalidatePath(`/shop/${store.slug}`);
+    return { success: true, count: formattedProducts.length };
+  } catch (error) {
+    console.error('bulkCreateProducts error:', error);
+    return { error: error.message || 'Bulk creation failed' };
+  }
 }

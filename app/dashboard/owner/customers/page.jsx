@@ -166,9 +166,14 @@ export default function CustomersPage() {
                                                     {new Date(customer.lastOrder).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                 </td>
                                                 <td className="text-end pe-32 py-24">
-                                                    <button className="action-circle-btn ms-auto">
-                                                        <i className="fas fa-ellipsis-h"></i>
-                                                    </button>
+                                                    <Link 
+                                                        href={`/dashboard/owner/ledger?customer=${encodeURIComponent(customer.name)}`}
+                                                        className="action-circle-btn ms-auto"
+                                                        title="View Payment History"
+                                                        style={{textDecoration: 'none'}}
+                                                    >
+                                                        <i className="fas fa-history"></i>
+                                                    </Link>
                                                 </td>
                                             </tr>
                                         ))
