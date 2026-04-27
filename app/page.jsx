@@ -17,7 +17,7 @@ import Brands from '@/components/Brands';
 import SearchPopup from '@/components/SearchPopup';
 import Offcanvas from '@/components/Offcanvas';
 
-export default function Home() {
+export default async function Home() {
   const platformStore = {
     name: 'Dukkan Setu',
     slug: 'platform',
