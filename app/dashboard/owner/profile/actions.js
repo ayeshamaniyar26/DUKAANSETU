@@ -1,5 +1,7 @@
 'use server';
 import prisma from '@/lib/prisma';
+import { handleFileUpload } from '@/lib/upload';
+
 export async function getStoreSettings(storeId) {
     try {
         const store = await prisma.store.findUnique({
@@ -41,18 +43,23 @@ export async function updateSettings(formData) {
             licenseType: formData.get('licenseType') || undefined,
         };
 
-        // Add file names only if present
-        const bp = formData.get('businessProof');
-        if (bp && typeof bp !== 'string' && bp.size > 0) storeData.businessProofUrl = bp.name;
-        
-        const sf = formData.get('shopFront');
-        if (sf && typeof sf !== 'string' && sf.size > 0) storeData.shopFrontUrl = sf.name;
+        // Handle File Uploads (Base64)
+        const businessProofFile = formData.get('businessProof');
+        const shopFrontFile = formData.get('shopFront');
+        const shopInteriorFile = formData.get('shopInterior');
+        const ownerIdProofFile = formData.get('ownerIdProof');
 
-        const si = formData.get('shopInterior');
-        if (si && typeof si !== 'string' && si.size > 0) storeData.shopInteriorUrl = si.name;
+        const [bpUrl, sfUrl, siUrl, opUrl] = await Promise.all([
+            handleFileUpload(businessProofFile),
+            handleFileUpload(shopFrontFile),
+            handleFileUpload(shopInteriorFile),
+            handleFileUpload(ownerIdProofFile)
+        ]);
 
-        const op = formData.get('ownerIdProof');
-        if (op && typeof op !== 'string' && op.size > 0) storeData.ownerIdProofUrl = op.name;
+        if (bpUrl) storeData.businessProofUrl = bpUrl;
+        if (sfUrl) storeData.shopFrontUrl = sfUrl;
+        if (siUrl) storeData.shopInteriorUrl = siUrl;
+        if (opUrl) storeData.ownerIdProofUrl = opUrl;
 
         // Update Store
         await prisma.store.update({
