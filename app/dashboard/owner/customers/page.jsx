@@ -50,197 +50,231 @@ export default function CustomersPage() {
     );
 
     return (
-        <div style={{display: 'flex', backgroundColor: '#F8FFF8', minHeight: '100vh', fontFamily: "'Inter', sans-serif"}}>
+        <div style={{display: 'flex', backgroundColor: 'var(--bg-main)', minHeight: '100vh'}}>
             <Sidebar items={menuItems} activeItem="Customers" />
-            <div style={{marginLeft: '280px', padding: '50px 60px', flexGrow: 1}}>
+            <div style={{marginLeft: '280px', padding: '0', flexGrow: 1, width: 'calc(100% - 280px)'}}>
                 
-                {/* Refined Header Section */}
-                <div className="d-flex justify-content-between align-items-center mb-40">
-                    <div>
-                        <h1 className="mb-8 fw-bold" style={{fontSize: '32px', color: '#111827', letterSpacing: '-0.5px'}}>Customer Directory</h1>
-                        <p className="text-muted mb-0" style={{fontSize: '15px'}}>Access and manage your complete client database.</p>
+                {/* Page Header */}
+                <header style={{ padding: '60px 48px 32px 48px' }} className="animate-fade-in">
+                    <div className="d-flex justify-content-between align-items-end mb-40">
+                        <div>
+                            <h1 className="fw-bold mb-8" style={{ fontSize: '36px', color: 'var(--text-main)', letterSpacing: '-0.04em' }}>Customers</h1>
+                            <p className="text-muted mb-0" style={{ fontSize: '16px', fontWeight: '500' }}>Manage your client database and analyze purchase history.</p>
+                        </div>
+                        <div className="d-flex align-items-center gap-16">
+                            <button className="btn bg-white shadow-sm border-0 px-24 py-12" onClick={fetchData} 
+                                style={{ borderRadius: 'var(--radius-md)', fontWeight: '600', fontSize: '14px', border: '1px solid var(--border-medium) !important' }}>
+                                <i className="fas fa-sync-alt me-8 text-success"></i> Sync Database
+                            </button>
+                            <button className="rr-btn px-28 py-12" style={{ borderRadius: 'var(--radius-md)', fontSize: '14px', fontWeight: '700' }} onClick={() => setIsModalOpen(true)}>
+                                <i className="fas fa-user-plus me-8"></i> Add Customer
+                            </button>
+                        </div>
                     </div>
-                    <div className="d-flex gap-3 align-items-center">
-                        <div className="position-relative d-flex align-items-center">
-                            <i className="fas fa-search text-muted" style={{position: 'absolute', left: '15px', fontSize: '14px', zIndex: 10}}></i>
+
+                    {/* Stats Grid */}
+                    <div className="row g-24 mb-40">
+                        {[
+                            { label: 'Total Customers', value: data.stats.total, icon: 'fa-users', color: '#3b82f6', bg: '#eff6ff' },
+                            { label: 'Repeat Clients', value: data.stats.active, icon: 'fa-user-check', color: 'var(--primary)', bg: 'var(--primary-light)' },
+                            { label: 'Total Revenue', value: `₹${data.customers.reduce((acc, c) => acc + c.totalSpent, 0).toLocaleString()}`, icon: 'fa-wallet', color: '#8b5cf6', bg: '#f5f3ff' }
+                        ].map((stat, i) => (
+                            <div className="col-md-4" key={i}>
+                                <div className="ds-card border-0 shadow-sm p-32">
+                                    <div className="d-flex align-items-center mb-16 gap-16">
+                                        <div className="rounded-16 d-flex align-items-center justify-content-center" 
+                                            style={{backgroundColor: stat.bg, color: stat.color, width: '48px', height: '48px'}}>
+                                            <i className={`fas ${stat.icon} fa-lg`}></i>
+                                        </div>
+                                        <div className="text-muted small fw-800 text-uppercase" style={{letterSpacing: '0.05em'}}>{stat.label}</div>
+                                    </div>
+                                    <h2 className="mb-0 fw-900" style={{fontSize: '34px', color: 'var(--text-main)'}}>{stat.value}</h2>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Search & Filter Bar */}
+                    <div className="d-flex justify-content-between align-items-center p-12 bg-white border shadow-sm" style={{ borderRadius: 'var(--radius-lg)' }}>
+                        <div className="position-relative flex-grow-1 max-w-400 ms-8">
+                            <i className="fas fa-search text-muted" style={{position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px'}}></i>
                             <input 
                                 type="text" 
-                                className="form-control" 
+                                className="form-control border-0 bg-light ps-44 py-12" 
                                 placeholder="Search by name or phone..." 
-                                style={{
-                                    borderRadius: '12px', 
-                                    width: '320px', 
-                                    height: '48px', 
-                                    paddingLeft: '45px', 
-                                    border: '1px solid #e5e7eb',
-                                    fontSize: '14px',
-                                    backgroundColor: '#fff',
-                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                                    position: 'relative'
-                                }}
+                                style={{ borderRadius: '10px', fontSize: '14px', fontWeight: '500' }}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
                         </div>
-                        <button 
-                            className="rr-btn px-24" 
-                            onClick={() => setIsModalOpen(true)} 
-                            style={{borderRadius: '12px', height: '48px', fontSize: '14px'}}
-                        >
-                            <i className="fas fa-plus me-2"></i> Add Customer
-                        </button>
-                        <button 
-                            className="btn btn-white shadow-sm px-15" 
-                            onClick={fetchData} 
-                            style={{
-                                borderRadius: '12px', 
-                                height: '48px', 
-                                border: '1px solid #e5e7eb',
-                                backgroundColor: '#fff',
-                                color: '#374151'
-                            }}
-                        >
-                            <i className="fas fa-sync-alt text-success"></i>
-                        </button>
                     </div>
-                </div>
+                </header>
 
-                {/* Professional Stats Cards */}
-                <div className="row mb-40 g-4">
-                    {[
-                        { label: 'Total Customers', value: data.stats.total, icon: 'fa-users', color: '#3b82f6', bg: '#eff6ff' },
-                        { label: 'Repeat Customers', value: data.stats.active, icon: 'fa-user-check', color: '#10b981', bg: '#ecfdf5' },
-                        { label: 'Store Revenue', value: `₹${data.customers.reduce((acc, c) => acc + c.totalSpent, 0).toLocaleString()}`, icon: 'fa-wallet', color: '#f59e0b', bg: '#fffbeb' }
-                    ].map((stat, i) => (
-                        <div className="col-md-4" key={i}>
-                            <div className="bg-white p-30 h-100 shadow-sm" style={{borderRadius: '20px', border: '1px solid #f1f5f9'}}>
-                                <div className="d-flex align-items-center mb-20" style={{gap: '15px'}}>
-                                    <div className="rounded-12 d-flex align-items-center justify-content-center" 
-                                        style={{backgroundColor: stat.bg, color: stat.color, width: '48px', height: '48px', flexShrink: 0}}>
-                                        <i className={`fas ${stat.icon} fa-lg`}></i>
-                                    </div>
-                                    <div className="text-muted small fw-700 text-uppercase" style={{letterSpacing: '0.5px', lineHeight: '1.2'}}>{stat.label}</div>
-                                </div>
-                                <h2 className="mb-0 fw-bold" style={{fontSize: '32px', color: '#111827'}}>{stat.value}</h2>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Structured Table Container */}
-                <div className="bg-white shadow-sm overflow-hidden" style={{borderRadius: '24px', border: '1px solid #f1f5f9'}}>
-                    <div className="table-responsive">
-                        <table className="table align-middle mb-0">
-                            <thead style={{backgroundColor: '#f9fafb', borderBottom: '1px solid #f1f5f9'}}>
-                                <tr>
-                                    <th className="ps-30 py-24 text-muted small fw-700 text-uppercase tracking-wider">Customer Info</th>
-                                    <th className="py-24 text-muted small fw-700 text-uppercase tracking-wider">Primary Address</th>
-                                    <th className="py-24 text-muted small fw-700 text-uppercase tracking-wider text-center">Orders</th>
-                                    <th className="py-24 text-muted small fw-700 text-uppercase tracking-wider">Total Spending</th>
-                                    <th className="py-24 text-muted small fw-700 text-uppercase tracking-wider">Last Seen</th>
-                                    <th className="text-end pe-30 py-24 text-muted small fw-700 text-uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {loading ? (
-                                    <tr><td colSpan="6" className="text-center py-60 text-muted fw-500">Syncing with secure server...</td></tr>
-                                ) : filteredCustomers.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="6" className="text-center py-100">
-                                            <div className="mb-20 opacity-20">
-                                                <i className="fas fa-user-friends fa-4x"></i>
-                                            </div>
-                                            <h5 className="fw-bold mb-4">No records found</h5>
-                                            <p className="text-muted small">We couldn't find any customers matching your search.</p>
-                                        </td>
+                <div style={{ padding: '0 48px 48px 48px' }} className="animate-fade-in">
+                    <div className="ds-card p-0 overflow-hidden border-0 shadow-md">
+                        <div className="table-responsive">
+                            <table className="table align-middle mb-0">
+                                <thead>
+                                    <tr style={{ backgroundColor: '#F9FAFB' }}>
+                                        <th className="ps-32 py-20 text-uppercase small fw-bold text-muted border-0" style={{ letterSpacing: '0.1em' }}>Customer</th>
+                                        <th className="py-20 text-uppercase small fw-bold text-muted border-0" style={{ letterSpacing: '0.1em' }}>Location</th>
+                                        <th className="py-20 text-uppercase small fw-bold text-muted border-0 text-center" style={{ letterSpacing: '0.1em' }}>Orders</th>
+                                        <th className="py-20 text-uppercase small fw-bold text-muted border-0" style={{ letterSpacing: '0.1em' }}>Revenue</th>
+                                        <th className="py-20 text-uppercase small fw-bold text-muted border-0" style={{ letterSpacing: '0.1em' }}>Last Visit</th>
+                                        <th className="pe-32 py-20 text-uppercase small fw-bold text-muted border-0 text-end" style={{ letterSpacing: '0.1em' }}>Actions</th>
                                     </tr>
-                                ) : (
-                                    filteredCustomers.map((customer, idx) => (
-                                        <tr key={idx} style={{borderBottom: '1px solid #f8fafc'}}>
-                                            <td className="ps-30 py-24">
-                                                <div className="d-flex align-items-center">
-                                                    <div className="rounded-circle bg-light d-flex align-items-center justify-content-center me-15 fw-bold" style={{width: '44px', height: '44px', color: '#2E7D32', fontSize: '15px'}}>
-                                                        {customer.name.charAt(0)}
-                                                    </div>
-                                                    <div>
-                                                        <strong className="d-block" style={{color: '#111827', fontSize: '15px'}}>{customer.name}</strong>
-                                                        <span className="text-muted small">{customer.phone}</span>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="py-24" style={{maxWidth: '220px'}}>
-                                                <div className="text-muted small" style={{lineHeight: '1.4'}}>
-                                                    {customer.address || 'No address saved'}
-                                                </div>
-                                            </td>
-                                            <td className="text-center py-24">
-                                                <span className="badge px-12 py-8 rounded-8" style={{backgroundColor: '#f1f5f9', color: '#475569', fontWeight: '600', fontSize: '12px'}}>
-                                                    {customer.totalOrders}
-                                                </span>
-                                            </td>
-                                            <td className="py-24 fw-bold text-success" style={{fontSize: '15px'}}>
-                                                ₹{customer.totalSpent.toLocaleString()}
-                                            </td>
-                                            <td className="py-24 text-muted small">
-                                                {new Date(customer.lastOrder).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                            </td>
-                                            <td className="text-end pe-30 py-24">
-                                                <button className="btn btn-sm btn-light border-0 px-15 py-10" style={{borderRadius: '100px', color: '#64748b', fontWeight: '600', fontSize: '13px'}}>
-                                                    <i className="fas fa-comment-dots me-2"></i> Message
-                                                </button>
+                                </thead>
+                                <tbody className="border-top-0">
+                                    {loading ? (
+                                        <tr><td colSpan="6" className="text-center py-80"><div className="ds-loader mx-auto"></div></td></tr>
+                                    ) : filteredCustomers.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="6" className="text-center py-100">
+                                                <div className="mb-20 text-muted opacity-20"><i className="fas fa-users fa-5x"></i></div>
+                                                <h5 className="fw-bold mb-8">No Customers Found</h5>
+                                                <p className="text-muted">Your customer database is currently empty.</p>
                                             </td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                    ) : (
+                                        filteredCustomers.map((customer, idx) => (
+                                            <tr key={idx} className="hover-row">
+                                                <td className="ps-32 py-24">
+                                                    <div className="d-flex align-items-center">
+                                                        <div className="customer-avatar me-16">
+                                                            {customer.name.charAt(0)}
+                                                        </div>
+                                                        <div>
+                                                            <div className="fw-800 text-dark mb-2" style={{fontSize: '15px'}}>{customer.name}</div>
+                                                            <div className="text-muted small fw-600">{customer.phone}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="py-24">
+                                                    <div className="text-muted small fw-500" style={{maxWidth: '200px', lineHeight: '1.4'}}>
+                                                        {customer.address || 'No address provided'}
+                                                    </div>
+                                                </td>
+                                                <td className="text-center py-24">
+                                                    <span className="order-count-badge">
+                                                        {customer.totalOrders} Orders
+                                                    </span>
+                                                </td>
+                                                <td className="py-24 fw-900 text-dark" style={{fontSize: '16px'}}>
+                                                    ₹{customer.totalSpent.toLocaleString()}
+                                                </td>
+                                                <td className="py-24 text-muted small fw-600">
+                                                    {new Date(customer.lastOrder).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                </td>
+                                                <td className="text-end pe-32 py-24">
+                                                    <button className="action-circle-btn ms-auto">
+                                                        <i className="fas fa-ellipsis-h"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Add Customer Modal */}
+            <style jsx>{`
+                .hover-row:hover { background-color: #FAFBFC; }
+                .customer-avatar {
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 14px;
+                    background-color: var(--primary-light);
+                    color: var(--primary-dark);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: 900;
+                    font-size: 18px;
+                }
+                .order-count-badge {
+                    padding: 6px 14px;
+                    background-color: #F3F4F6;
+                    border-radius: 10px;
+                    font-size: 11px;
+                    font-weight: 800;
+                    color: #4B5563;
+                }
+                .action-circle-btn {
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: 1px solid var(--border-medium);
+                    background-color: white;
+                    color: var(--text-muted);
+                    transition: 0.2s;
+                }
+                .action-circle-btn:hover {
+                    background-color: var(--bg-main);
+                    color: var(--primary);
+                    border-color: var(--primary);
+                }
+                .max-w-400 { max-width: 400px; }
+            `}</style>
+
+            {/* Premium Add Customer Modal */}
             {isModalOpen && (
                 <div style={{
                     position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-                    backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 9999, display: 'flex',
+                    backgroundColor: 'rgba(17, 24, 39, 0.7)', zIndex: 9999, display: 'flex',
                     alignItems: 'center', justifyContent: 'center', padding: '20px',
-                    backdropFilter: 'blur(4px)'
-                }}>
+                    backdropFilter: 'blur(8px)'
+                }} className="animate-fade-in">
                     <div style={{
-                        backgroundColor: 'white', maxWidth: '500px', width: '100%', 
-                        borderRadius: '24px', padding: '40px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+                        backgroundColor: 'white', maxWidth: '550px', width: '100%', 
+                        borderRadius: 'var(--radius-xl)', padding: '48px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
                         position: 'relative'
                     }}>
                         <button onClick={() => setIsModalOpen(false)} style={{
-                            position: 'absolute', top: '25px', right: '25px', border: 'none', 
-                            background: '#f8fafc', width: '36px', height: '36px', borderRadius: '50%',
-                            fontSize: '20px', cursor: 'pointer', color: '#64748b'
-                        }}>&times;</button>
+                            position: 'absolute', top: '30px', right: '30px', border: 'none', 
+                            background: '#F3F4F6', width: '40px', height: '40px', borderRadius: '50%',
+                            fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: 'var(--text-muted)'
+                        }}><i className="fas fa-times"></i></button>
 
-                        <h3 className="mb-10 fw-bold">Add Customer</h3>
-                        <p className="text-muted mb-30 small">Create a new customer profile manually.</p>
+                        <div className="mb-40">
+                            <h2 className="mb-8" style={{fontSize: '28px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.03em'}}>
+                                New Customer
+                            </h2>
+                            <p className="text-muted fw-500">Create a permanent profile for your client.</p>
+                        </div>
 
                         <form onSubmit={handleSubmit}>
-                            <div className="mb-20">
-                                <label className="d-block mb-8 small fw-bold text-muted text-uppercase">Full Name</label>
-                                <input name="name" type="text" required className="form-control" 
-                                    placeholder="John Doe"
-                                    style={{height: '52px', borderRadius: '12px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc'}} />
+                            <div className="row g-24 mb-32">
+                                <div className="col-12">
+                                    <label className="form-label small fw-800 text-muted text-uppercase mb-12 d-block">Full Name</label>
+                                    <input name="name" type="text" required 
+                                        className="form-control px-20 py-14"
+                                        style={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', backgroundColor: '#F9FAFB', fontSize: '15px' }}
+                                        placeholder="Enter customer name" />
+                                </div>
+                                <div className="col-12">
+                                    <label className="form-label small fw-800 text-muted text-uppercase mb-12 d-block">Phone Number</label>
+                                    <input name="phone" type="text" required 
+                                        className="form-control px-20 py-14"
+                                        style={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', backgroundColor: '#F9FAFB', fontSize: '15px' }}
+                                        placeholder="+91 XXXXX XXXXX" />
+                                </div>
+                                <div className="col-12">
+                                    <label className="form-label small fw-800 text-muted text-uppercase mb-12 d-block">Address</label>
+                                    <textarea name="address" rows="3"
+                                        className="form-control px-20 py-14"
+                                        style={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', backgroundColor: '#F9FAFB', fontSize: '15px', resize: 'none' }}
+                                        placeholder="Full address details..."></textarea>
+                                </div>
                             </div>
-                            <div className="mb-20">
-                                <label className="d-block mb-8 small fw-bold text-muted text-uppercase">Phone Number</label>
-                                <input name="phone" type="text" required className="form-control" 
-                                    placeholder="+91 98765 43210"
-                                    style={{height: '52px', borderRadius: '12px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc'}} />
-                            </div>
-                            <div className="mb-30">
-                                <label className="d-block mb-8 small fw-bold text-muted text-uppercase">Address</label>
-                                <textarea name="address" rows="3" className="form-control" 
-                                    placeholder="House No, Street, City..."
-                                    style={{borderRadius: '12px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc'}}></textarea>
-                            </div>
-                            <button type="submit" className="rr-btn w-100 py-15" style={{borderRadius: '12px', fontSize: '16px'}}>
-                                Save Customer
+                            <button type="submit" className="rr-btn w-100 py-18" style={{borderRadius: '16px', fontSize: '16px', fontWeight: '800'}}>
+                                Register Customer
                             </button>
                         </form>
                     </div>

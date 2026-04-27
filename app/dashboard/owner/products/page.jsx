@@ -163,38 +163,81 @@ export default function ProductsPage() {
 
         const storeId = localStorage.getItem('storeId');
 
+        let res;
         if (editingProduct) {
             formData.append('id', editingProduct.id);
-            await updateProduct(formData);
+            res = await updateProduct(formData);
         } else {
-            await createProduct(formData, storeId);
+            res = await createProduct(formData, storeId);
         }
         
-        setIsModalOpen(false);
-        setEditingProduct(null);
-        setPreviewUrl(null);
-        fetchProducts();
-        Swal.fire('Success', editingProduct ? 'Product updated' : 'Product created', 'success');
+        if (res?.error) {
+            Swal.fire('Error', res.error, 'error');
+        } else {
+            setIsModalOpen(false);
+            setEditingProduct(null);
+            setPreviewUrl(null);
+            fetchProducts();
+            Swal.fire('Success', editingProduct ? 'Product updated' : 'Product created', 'success');
+        }
     };
 
     const totalPages = Math.ceil(total / pageSize);
 
     return (
-        <div style={{ display: 'flex', backgroundColor: '#F9FAFB', minHeight: '100vh', fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ display: 'flex', backgroundColor: 'var(--bg-main)', minHeight: '100vh' }}>
             <Sidebar items={menuItems} activeItem="Products" />
             
             <main style={{ marginLeft: '280px', flexGrow: 1, width: 'calc(100% - 280px)', minHeight: '100vh' }}>
                 {/* Page Header */}
-                <header style={{ padding: '40px 48px 32px 48px' }}>
-                    <div className="d-flex justify-content-between align-items-end">
+                <header style={{ padding: '60px 48px 32px 48px' }} className="animate-fade-in">
+                    <div className="d-flex justify-content-between align-items-end mb-40">
                         <div>
-                            <h1 className="fw-bold mb-8" style={{ fontSize: '32px', color: '#111827', letterSpacing: '-0.025em' }}>Inventory Management</h1>
-                            <p className="text-muted mb-0" style={{ fontSize: '16px' }}>Manage your store catalog, import products in bulk, or export your inventory.</p>
+                            <h1 className="fw-bold mb-8" style={{ fontSize: '36px', color: 'var(--text-main)', letterSpacing: '-0.04em' }}>Inventory</h1>
+                            <p className="text-muted mb-0" style={{ fontSize: '16px', fontWeight: '500' }}>Manage your product catalog, prices, and stock visibility.</p>
                         </div>
-                        <div className="d-flex align-items-center gap-12">
+                        <div className="d-flex align-items-center gap-16">
+                            <button className="btn bg-white shadow-sm border-0 px-24 py-12" onClick={handleExport} 
+                                style={{ borderRadius: 'var(--radius-md)', fontWeight: '600', fontSize: '14px', border: '1px solid var(--border-medium) !important' }}>
+                                <i className="fas fa-arrow-up-from-bracket me-8 text-success"></i> Export
+                            </button>
+                            <label className="btn bg-white shadow-sm border-0 px-24 py-12 mb-0 d-flex align-items-center" 
+                                style={{ borderRadius: 'var(--radius-md)', fontWeight: '600', fontSize: '14px', border: '1px solid var(--border-medium) !important', cursor: 'pointer' }}>
+                                <i className="fas fa-file-csv me-8 text-primary"></i> Import
+                                <input type="file" accept=".csv" className="d-none" onChange={handleImport} />
+                            </label>
+                            <button className="rr-btn px-28 py-12" style={{ borderRadius: 'var(--radius-md)', fontSize: '14px', fontWeight: '700' }} onClick={() => { 
+                                setEditingProduct(null); 
+                                setSourceType('url');
+                                setPreviewUrl(null);
+                                setIsModalOpen(true); 
+                            }}>
+                                <i className="fas fa-plus me-8"></i> Add New Product
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Filter Bar */}
+                    <div className="d-flex justify-content-between align-items-center p-12 bg-white border shadow-sm" style={{ borderRadius: 'var(--radius-lg)' }}>
+                        <div className="d-flex gap-12 align-items-center ps-8">
+                            <i className="fas fa-filter text-muted small"></i>
                             <select 
-                                className="form-select shadow-sm" 
-                                style={{ borderRadius: '12px', width: '180px', fontSize: '14px', height: '45px' }}
+                                className="form-select border-0 bg-transparent fw-600" 
+                                style={{ width: '160px', fontSize: '14px', cursor: 'pointer' }}
+                                value={categoryFilter}
+                                onChange={(e) => setCategoryFilter(e.target.value)}
+                            >
+                                <option value="">All Categories</option>
+                                {[...new Set(products.map(p => p.category))].map(cat => (
+                                    <option key={cat} value={cat}>{cat}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="d-flex gap-12 align-items-center pe-8">
+                            <span className="text-muted small fw-600">Sort by:</span>
+                            <select 
+                                className="form-select border-0 bg-transparent fw-600 text-end" 
+                                style={{ width: '150px', fontSize: '14px', cursor: 'pointer' }}
                                 onChange={(e) => {
                                     const [field, order] = e.target.value.split(':');
                                     setSortBy(field);
@@ -203,88 +246,68 @@ export default function ProductsPage() {
                             >
                                 <option value="createdAt:desc">Newest First</option>
                                 <option value="name:asc">Name (A-Z)</option>
-                                <option value="name:desc">Name (Z-A)</option>
-                                <option value="price:asc">Price (Low-High)</option>
-                                <option value="price:desc">Price (High-Low)</option>
+                                <option value="price:asc">Price: Low-High</option>
+                                <option value="price:desc">Price: High-Low</option>
                             </select>
-                            <button className="btn btn-white shadow-sm border-0 px-20 py-12" onClick={handleExport} 
-                                style={{ borderRadius: '12px', fontWeight: '600', backgroundColor: '#fff', fontSize: '14px', border: '1px solid #E5E7EB !important' }}>
-                                <i className="fas fa-file-export me-8 text-success"></i> Export Data
-                            </button>
-                            <label className="btn btn-white shadow-sm border-0 px-20 py-12 mb-0 d-flex align-items-center" 
-                                style={{ borderRadius: '12px', fontWeight: '600', backgroundColor: '#fff', fontSize: '14px', border: '1px solid #E5E7EB !important', cursor: 'pointer' }}>
-                                <i className="fas fa-file-import me-8 text-primary"></i> Import CSV
-                                <input type="file" accept=".csv" className="d-none" onChange={handleImport} />
-                            </label>
-                            <button className="rr-btn px-24 py-12" style={{ borderRadius: '12px', fontSize: '14px', fontWeight: '600' }} onClick={() => { 
-                                setEditingProduct(null); 
-                                setSourceType('url');
-                                setPreviewUrl(null);
-                                setIsModalOpen(true); 
-                            }}>
-                                <i className="fas fa-plus me-8"></i> Add Product
-                            </button>
                         </div>
                     </div>
                 </header>
 
                 {/* Main Content Area */}
-                <div style={{ padding: '0 48px 48px 48px' }}>
-                    <div className="bg-white shadow-sm" style={{ borderRadius: '16px', border: '1px solid #F3F4F6', overflow: 'hidden' }}>
-                        {loading ? (
-                            <div className="p-48 text-center">
-                                <div className="spinner-border text-success mb-16" role="status"></div>
-                                <p className="text-muted mb-0">Loading your inventory...</p>
-                            </div>
-                        ) : (
-                            <>
+                <div style={{ padding: '0 48px 48px 48px' }} className="animate-fade-in">
+                    {loading ? (
+                        <div className="ds-card text-center p-64">
+                            <div className="ds-loader mx-auto mb-20"></div>
+                            <p className="text-muted fw-500">Syncing your inventory...</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="ds-card p-0 overflow-hidden border-0 shadow-md">
                                 <div className="table-responsive">
                                     <table className="table align-middle mb-0">
-                                        <thead style={{ backgroundColor: '#F9FAFB' }}>
-                                            <tr>
-                                                <th className="ps-32 py-16 text-uppercase small fw-bold text-muted" style={{ letterSpacing: '0.05em' }}>Product</th>
-                                                <th className="py-16 text-uppercase small fw-bold text-muted" style={{ letterSpacing: '0.05em' }}>Category</th>
-                                                <th className="py-16 text-uppercase small fw-bold text-muted" style={{ letterSpacing: '0.05em' }}>Price</th>
-                                                <th className="py-16 text-uppercase small fw-bold text-muted" style={{ letterSpacing: '0.05em' }}>Status</th>
-                                                <th className="py-16 text-uppercase small fw-bold text-muted" style={{ letterSpacing: '0.05em' }}>Created</th>
-                                                <th className="pe-32 py-16 text-uppercase small fw-bold text-muted text-end" style={{ letterSpacing: '0.05em' }}>Actions</th>
+                                        <thead>
+                                            <tr style={{ backgroundColor: '#F9FAFB' }}>
+                                                <th className="ps-32 py-20 text-uppercase small fw-bold text-muted border-0" style={{ letterSpacing: '0.1em' }}>Product Details</th>
+                                                <th className="py-20 text-uppercase small fw-bold text-muted border-0" style={{ letterSpacing: '0.1em' }}>Category</th>
+                                                <th className="py-20 text-uppercase small fw-bold text-muted border-0" style={{ letterSpacing: '0.1em' }}>Price</th>
+                                                <th className="py-20 text-uppercase small fw-bold text-muted border-0" style={{ letterSpacing: '0.1em' }}>Status</th>
+                                                <th className="pe-32 py-20 text-uppercase small fw-bold text-muted border-0 text-end" style={{ letterSpacing: '0.1em' }}>Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody className="border-top-0">
                                             {products.map((product) => (
-                                                <tr key={product.id} style={{ transition: '0.2s' }} className="hover-bg-light">
+                                                <tr key={product.id} className="hover-row">
                                                     <td className="ps-32 py-20">
-                                                        <div className="d-flex align-items-center gap-16">
-                                                            <div style={{ width: '48px', height: '48px', borderRadius: '10px', overflow: 'hidden', backgroundColor: '#F3F4F6', border: '1px solid #E5E7EB', flexShrink: 0 }}>
+                                                        <div className="d-flex align-items-center gap-20">
+                                                            <div className="product-image-container shadow-sm">
                                                                 <img src={product.image || '/assets/imgs/what-we-do/what-we-do__item-1.png'} 
                                                                     alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                             </div>
                                                             <div>
-                                                                <div className="fw-bold text-dark" style={{ fontSize: '15px' }}>{product.name}</div>
-                                                                <div className="text-muted small">ID: {product.id.slice(-6).toUpperCase()}</div>
+                                                                <div className="fw-bold text-dark mb-2" style={{ fontSize: '15px' }}>{product.name}</div>
+                                                                <div className="text-muted small">SKU: {product.id.slice(-8).toUpperCase()}</div>
                                                             </div>
                                                         </div>
                                                     </td>
                                                     <td className="py-20">
-                                                        <span className="px-12 py-4 rounded-pill small fw-600" style={{ backgroundColor: '#F3F4F6', color: '#374151' }}>
+                                                        <span className="cat-badge">
                                                             {product.category}
                                                         </span>
                                                     </td>
-                                                    <td className="py-20 fw-bold text-dark">₹{product.price.toLocaleString()}</td>
+                                                    <td className="py-20 fw-800 text-dark" style={{fontSize: '15px'}}>₹{product.price.toLocaleString()}</td>
                                                     <td className="py-20">
-                                                        <span className="d-flex align-items-center gap-6 text-success small fw-600">
-                                                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981' }}></span>
-                                                            Active
+                                                        <span className="status-indicator">
+                                                            <span className="dot"></span>
+                                                            In Stock
                                                         </span>
                                                     </td>
-                                                    <td className="py-20 text-muted small">{new Date(product.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                                                     <td className="pe-32 py-20 text-end">
-                                                        <div className="d-flex justify-content-end gap-8">
-                                                            <button className="btn btn-icon-hover p-8" onClick={() => handleEdit(product)} title="Edit Product">
-                                                                <i className="far fa-edit text-primary"></i>
+                                                        <div className="d-flex justify-content-end gap-12">
+                                                            <button className="action-circle-btn edit" onClick={() => handleEdit(product)} title="Edit">
+                                                                <i className="fas fa-pen"></i>
                                                             </button>
-                                                            <button className="btn btn-icon-hover p-8" onClick={() => handleDelete(product.id)} title="Delete Product">
-                                                                <i className="far fa-trash-alt text-danger"></i>
+                                                            <button className="action-circle-btn delete" onClick={() => handleDelete(product.id)} title="Delete">
+                                                                <i className="fas fa-trash-can"></i>
                                                             </button>
                                                         </div>
                                                     </td>
@@ -292,9 +315,12 @@ export default function ProductsPage() {
                                             ))}
                                             {products.length === 0 && (
                                                 <tr>
-                                                    <td colSpan="6" className="text-center py-64">
-                                                        <i className="fas fa-box-open fa-3x text-light mb-16"></i>
-                                                        <p className="text-muted">No products found. Start by adding your first product!</p>
+                                                    <td colSpan="5" className="text-center py-80">
+                                                        <div className="mb-20 text-muted opacity-20">
+                                                            <i className="fas fa-box-open fa-5x"></i>
+                                                        </div>
+                                                        <h5 className="fw-bold mb-8">No Products Found</h5>
+                                                        <p className="text-muted">Your store's inventory is empty. Click "Add New Product" to start.</p>
                                                     </td>
                                                 </tr>
                                             )}
@@ -304,131 +330,176 @@ export default function ProductsPage() {
 
                                 {/* Pagination */}
                                 {totalPages > 1 && (
-                                    <div className="px-32 py-24 d-flex justify-content-between align-items-center border-top bg-light-soft">
-                                        <div className="text-muted small fw-500">
-                                            Showing <span className="text-dark">{(currentPage - 1) * pageSize + 1}</span> to <span className="text-dark">{Math.min(currentPage * pageSize, total)}</span> of <span className="text-dark">{total}</span> products
+                                    <div className="px-32 py-24 d-flex justify-content-between align-items-center border-top" style={{ backgroundColor: '#F9FAFB' }}>
+                                        <div className="text-muted small fw-600">
+                                            Page <span className="text-dark">{currentPage}</span> of <span className="text-dark">{totalPages}</span>
                                         </div>
-                                        <div className="d-flex gap-8">
+                                        <div className="d-flex gap-12">
                                             <button 
-                                                className="btn btn-white shadow-sm border px-16 py-8 small fw-600"
+                                                className="btn bg-white shadow-sm border px-20 py-8 small fw-700"
                                                 style={{ borderRadius: '10px' }}
                                                 disabled={currentPage === 1}
                                                 onClick={() => setCurrentPage(prev => prev - 1)}
                                             >
-                                                Previous
+                                                <i className="fas fa-chevron-left me-8"></i> Previous
                                             </button>
                                             <button 
-                                                className="btn btn-white shadow-sm border px-16 py-8 small fw-600"
+                                                className="btn bg-white shadow-sm border px-20 py-8 small fw-700"
                                                 style={{ borderRadius: '10px' }}
                                                 disabled={currentPage === totalPages}
                                                 onClick={() => setCurrentPage(prev => prev + 1)}
                                             >
-                                                Next
+                                                Next <i className="fas fa-chevron-right ms-8"></i>
                                             </button>
                                         </div>
                                     </div>
                                 )}
-                            </>
-                        )}
-                    </div>
+                            </div>
+                        </>
+                    )}
                 </div>
             </main>
 
             <style jsx>{`
-                .btn-icon-hover {
-                    width: 36px;
-                    height: 36px;
+                .product-image-container {
+                    width: 56px; 
+                    height: 56px; 
+                    border-radius: 14px; 
+                    overflow: hidden; 
+                    background-color: #F3F4F6; 
+                    border: 1px solid var(--border-medium); 
+                    flex-shrink: 0;
+                }
+                .hover-row:hover {
+                    background-color: #FAFBFC;
+                }
+                .cat-badge {
+                    padding: 6px 14px;
+                    border-radius: 10px;
+                    background-color: #F3F4F6;
+                    color: #4B5563;
+                    font-size: 12px;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.02em;
+                }
+                .status-indicator {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    color: var(--primary-dark);
+                    font-size: 13px;
+                    font-weight: 700;
+                    background-color: var(--primary-light);
+                    padding: 4px 12px;
+                    border-radius: 20px;
+                }
+                .status-indicator .dot {
+                    width: 6px;
+                    height: 6px;
+                    border-radius: 50%;
+                    background-color: var(--primary);
+                }
+                .action-circle-btn {
+                    width: 38px;
+                    height: 38px;
+                    border-radius: 50%;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    border-radius: 10px;
-                    background: transparent;
-                    border: none;
+                    border: 1px solid var(--border-medium);
+                    background-color: white;
+                    color: var(--text-muted);
+                    font-size: 14px;
                     transition: 0.2s;
                 }
-                .btn-icon-hover:hover {
-                    background: #F3F4F6;
+                .action-circle-btn:hover {
+                    transform: scale(1.1);
+                    box-shadow: var(--shadow-md);
                 }
-                .hover-bg-light:hover {
-                    background-color: #F9FAFB;
+                .action-circle-btn.edit:hover {
+                    border-color: var(--primary);
+                    color: var(--primary);
                 }
-                .bg-light-soft {
-                    background-color: #FAFBFC;
+                .action-circle-btn.delete:hover {
+                    border-color: #EF4444;
+                    color: #EF4444;
                 }
             `}</style>
-            {/* Product Modal */}
+
+            {/* Premium Product Modal */}
             {isModalOpen && (
                 <div style={{
                     position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-                    backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 9999, display: 'flex',
-                    flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
-                    padding: '60px 20px', overflowY: 'auto'
-                }}>
+                    backgroundColor: 'rgba(17, 24, 39, 0.7)', zIndex: 9999, display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', padding: '20px',
+                    backdropFilter: 'blur(8px)'
+                }} className="animate-fade-in">
                     <div style={{
                         backgroundColor: 'white', maxWidth: '650px', width: '100%', 
-                        borderRadius: '15px', padding: '40px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+                        borderRadius: 'var(--radius-xl)', padding: '48px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
                         position: 'relative'
                     }}>
                         <button onClick={() => setIsModalOpen(false)} style={{
-                            position: 'absolute', top: '20px', right: '20px', border: 'none', 
-                            background: '#f5f5f5', width: '35px', height: '35px', borderRadius: '50%',
-                            fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}>&times;</button>
+                            position: 'absolute', top: '30px', right: '30px', border: 'none', 
+                            background: '#F3F4F6', width: '40px', height: '40px', borderRadius: '50%',
+                            fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: 'var(--text-muted)'
+                        }}><i className="fas fa-times"></i></button>
 
-                        <h2 className="mb-30" style={{fontSize: '24px', fontWeight: '700', color: '#15181B'}}>
-                            {editingProduct ? 'Edit Product' : 'Add New Product'}
-                        </h2>
+                        <div className="mb-40">
+                            <h2 className="mb-8" style={{fontSize: '28px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.03em'}}>
+                                {editingProduct ? 'Edit Product' : 'Add New Product'}
+                            </h2>
+                            <p className="text-muted fw-500">Provide the essential details to list your product.</p>
+                        </div>
 
                         <form onSubmit={handleSubmit}>
-                            <div className="row">
-                                <div className="col-md-12 mb-20">
-                                    <label style={{display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: '#4b5563'}}>Product Name</label>
+                            <div className="row g-24">
+                                <div className="col-12">
+                                    <label className="form-label small fw-800 text-muted text-uppercase mb-12 d-block">Product Identity</label>
                                     <input name="name" type="text" required defaultValue={editingProduct?.name} 
-                                        style={{width: '100%', padding: '12px 15px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f9fafb', outline: 'none'}} />
+                                        className="form-control px-20 py-14"
+                                        style={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', backgroundColor: '#F9FAFB', fontSize: '15px' }}
+                                        placeholder="e.g. Organic Brown Eggs" />
                                 </div>
-                                <div className="col-md-6 mb-20">
-                                    <label style={{display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: '#4b5563'}}>Category</label>
+                                <div className="col-md-6">
+                                    <label className="form-label small fw-800 text-muted text-uppercase mb-12 d-block">Category</label>
                                     <input name="category" type="text" required defaultValue={editingProduct?.category}
-                                        style={{width: '100%', padding: '12px 15px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f9fafb'}} placeholder="e.g. Snacks" />
+                                        className="form-control px-20 py-14"
+                                        style={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', backgroundColor: '#F9FAFB', fontSize: '15px' }}
+                                        placeholder="e.g. Groceries" />
                                 </div>
-                                <div className="col-md-6 mb-20">
-                                    <label style={{display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: '#4b5563'}}>Price (₹)</label>
+                                <div className="col-md-6">
+                                    <label className="form-label small fw-800 text-muted text-uppercase mb-12 d-block">Price Unit (₹)</label>
                                     <input name="price" type="number" step="0.01" required defaultValue={editingProduct?.price}
-                                        style={{width: '100%', padding: '12px 15px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f9fafb'}} />
+                                        className="form-control px-20 py-14"
+                                        style={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', backgroundColor: '#F9FAFB', fontSize: '15px' }}
+                                        placeholder="0.00" />
                                 </div>
-                                <div className="col-md-12 mb-20">
-                                    <label style={{display: 'block', marginBottom: '15px', fontSize: '14px', fontWeight: '600', color: '#4b5563'}}>
-                                        Product Image
-                                    </label>
+                                <div className="col-12">
+                                    <label className="form-label small fw-800 text-muted text-uppercase mb-12 d-block">Product Visuals</label>
                                     
-                                    <div style={{display: 'flex', gap: '10px', marginBottom: '15px'}}>
+                                    <div className="d-flex gap-8 mb-16 p-6 bg-light rounded-12 w-fit-content" style={{ backgroundColor: '#F3F4F6' }}>
                                         <button type="button" 
                                             onClick={() => setSourceType('url')}
-                                            style={{
-                                                padding: '8px 15px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer',
-                                                border: '1px solid #e2e8f0',
-                                                backgroundColor: sourceType === 'url' ? '#2E7D32' : 'white',
-                                                color: sourceType === 'url' ? 'white' : '#64748b',
-                                                fontWeight: '600'
-                                            }}>Image URL</button>
+                                            className={`btn btn-sm px-20 py-8 border-0 fw-700 ${sourceType === 'url' ? 'bg-white shadow-sm text-success' : 'text-muted'}`}
+                                            style={{ borderRadius: '8px', fontSize: '12px' }}>Image URL</button>
                                         <button type="button" 
                                             onClick={() => setSourceType('upload')}
-                                            style={{
-                                                padding: '8px 15px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer',
-                                                border: '1px solid #e2e8f0',
-                                                backgroundColor: sourceType === 'upload' ? '#2E7D32' : 'white',
-                                                color: sourceType === 'upload' ? 'white' : '#64748b',
-                                                fontWeight: '600'
-                                            }}>Upload File</button>
+                                            className={`btn btn-sm px-20 py-8 border-0 fw-700 ${sourceType === 'upload' ? 'bg-white shadow-sm text-success' : 'text-muted'}`}
+                                            style={{ borderRadius: '8px', fontSize: '12px' }}>Local Upload</button>
                                     </div>
 
                                     {sourceType === 'url' ? (
                                         <input name="image" type="text" defaultValue={editingProduct?.image}
-                                            style={{width: '100%', padding: '12px 15px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f9fafb'}} placeholder="Link to product image (HTTPS)" />
+                                            className="form-control px-20 py-14"
+                                            style={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', backgroundColor: '#F9FAFB', fontSize: '15px' }} 
+                                            placeholder="https://example.com/image.jpg" />
                                     ) : (
-                                        <div style={{
-                                            border: '2px dashed #e2e8f0', borderRadius: '10px', padding: '20px', textAlign: 'center',
-                                            backgroundColor: '#f9fafb', position: 'relative'
+                                        <div className="upload-zone p-32 text-center" style={{
+                                            border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-lg)',
+                                            backgroundColor: '#F9FAFB', position: 'relative', transition: '0.3s'
                                         }}>
                                             <input name="file" type="file" accept="image/*" 
                                                 style={{position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%'}} 
@@ -438,29 +509,32 @@ export default function ProductsPage() {
                                                 }}
                                             />
                                             {previewUrl ? (
-                                                <img src={previewUrl} alt="Preview" style={{maxHeight: '150px', borderRadius: '8px'}} />
+                                                <img src={previewUrl} alt="Preview" style={{maxHeight: '120px', borderRadius: '12px', boxShadow: 'var(--shadow-md)'}} />
                                             ) : (
                                                 <div>
-                                                    <i className="fas fa-cloud-upload-alt mb-10" style={{fontSize: '30px', color: '#64748b'}}></i>
-                                                    <p style={{fontSize: '14px', color: '#64748b', margin: 0}}>Click or drag to upload image</p>
+                                                    <i className="fas fa-cloud-arrow-up mb-12 text-muted" style={{fontSize: '32px'}}></i>
+                                                    <p className="mb-0 small fw-600 text-muted">Drop image or <span className="text-success">browse files</span></p>
                                                 </div>
                                             )}
                                         </div>
                                     )}
                                 </div>
-                                <div className="col-md-12 mb-30">
-                                    <label style={{display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: '#4b5563'}}>Description</label>
+                                <div className="col-12">
+                                    <label className="form-label small fw-800 text-muted text-uppercase mb-12 d-block">Description</label>
                                     <textarea name="description" rows="3" defaultValue={editingProduct?.description}
-                                        style={{width: '100%', padding: '12px 15px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f9fafb', minHeight: '100px'}}></textarea>
+                                        className="form-control px-20 py-14"
+                                        style={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', backgroundColor: '#F9FAFB', fontSize: '15px', resize: 'none' }}
+                                        placeholder="Add a short description..."></textarea>
                                 </div>
                             </div>
                             
-                            <div className="d-flex gap-15 mt-10">
-                                <button type="submit" className="rr-btn flex-grow-1" style={{padding: '15px', borderRadius: '10px', fontSize: '16px'}}>
-                                    {editingProduct ? 'Update Product' : 'Create Product'}
+                            <div className="d-flex gap-16 mt-40">
+                                <button type="submit" className="rr-btn flex-grow-1 py-16" style={{borderRadius: '14px', fontSize: '16px', fontWeight: '800'}}>
+                                    {editingProduct ? 'Save Changes' : 'Create Product'}
                                 </button>
                                 <button type="button" onClick={() => setIsModalOpen(false)} 
-                                    style={{padding: '15px 25px', borderRadius: '10px', border: '1px solid #e2e8f0', backgroundColor: 'transparent', color: '#64748b', fontWeight: '600'}}>
+                                    className="btn btn-white px-28"
+                                    style={{borderRadius: '14px', fontWeight: '700', border: '1px solid var(--border-medium)', color: 'var(--text-muted)'}}>
                                     Cancel
                                 </button>
                             </div>

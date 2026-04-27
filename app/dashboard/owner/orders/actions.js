@@ -137,3 +137,23 @@ export async function getOrder(id) {
         items: parsedItems
     };
 }
+export async function searchStoreProducts(query, storeId) {
+    if (!query || query.length < 2) return [];
+    
+    return await prisma.product.findMany({
+        where: {
+            storeId: storeId,
+            isDeleted: false,
+            name: {
+                contains: query,
+                mode: 'insensitive'
+            }
+        },
+        take: 5,
+        select: {
+            id: true,
+            name: true,
+            price: true
+        }
+    });
+}

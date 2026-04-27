@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
-import { getOrders, updateOrderStatus, createOrder, updateOrder, deleteOrder } from './actions';
+import { getOrders, updateOrderStatus, createOrder, updateOrder, deleteOrder, searchStoreProducts } from './actions';
+import { getStoreSettings } from '../profile/actions';
 import Swal from 'sweetalert2';
 import Link from 'next/link';
 
@@ -12,6 +13,8 @@ export default function OrdersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
   const [items, setItems] = useState([{ name: '', quantity: 1 }]);
+  const [suggestions, setSuggestions] = useState({}); // {index: [products]}
+  const [store, setStore] = useState(null);
 
   const menuItems = [
     { name: 'Dashboard', icon: 'fas fa-home', link: '/dashboard/owner' },
@@ -32,8 +35,34 @@ export default function OrdersPage() {
     const storeId = localStorage.getItem('storeId');
     const orderData = await getOrders(storeId);
     setData(orderData);
+    
+    // Fetch store details for the placeholder/category
+    const storeRes = await getStoreSettings(storeId);
+    if (storeRes) {
+        setStore(storeRes.store);
+    }
+
     setLoading(false);
   }
+
+  const handleSearch = async (index, query) => {
+    updateItem(index, 'name', query);
+    if (query.length < 2) {
+        setSuggestions(prev => ({ ...prev, [index]: [] }));
+        return;
+    }
+    const storeId = localStorage.getItem('storeId');
+    const matches = await searchStoreProducts(query, storeId);
+    setSuggestions(prev => ({ ...prev, [index]: matches }));
+  };
+
+  const selectSuggestion = (index, product) => {
+    const newItems = [...items];
+    newItems[index].name = product.name;
+    newItems[index].price = product.price; // Optional: store price too
+    setItems(newItems);
+    setSuggestions(prev => ({ ...prev, [index]: [] }));
+  };
 
   const handleStatusUpdate = async (orderId, newStatus) => {
     const res = await updateOrderStatus(orderId, newStatus);
@@ -124,136 +153,345 @@ export default function OrdersPage() {
   };
 
   return (
-    <div style={{display: 'flex', backgroundColor: '#F8FFF8', minHeight: '100vh'}}>
+    <div style={{display: 'flex', backgroundColor: 'var(--bg-main)', minHeight: '100vh'}}>
         <Sidebar items={menuItems} activeItem="Orders" />
-        <div style={{marginLeft: '280px', padding: '40px', flexGrow: 1}}>
-            <div className="d-flex justify-content-between align-items-center mb-30">
-                <div>
-                    <h1 className="mb-0">Order Management</h1>
-                    <p className="text-muted">Monitor and fulfill your business orders</p>
-                </div>
-                <div className="d-flex gap-3">
-                    <button className="btn btn-outline-success px-24 py-12" onClick={fetchData} style={{borderRadius: '12px', height: '48px', fontWeight: '600'}}>
-                        <i className="fas fa-sync-alt me-2"></i> Refresh
-                    </button>
-                    <button className="rr-btn" onClick={() => { setEditingOrder(null); setItems([{ name: '', quantity: 1 }]); setIsModalOpen(true); }}>
-                        <i className="fas fa-plus me-2"></i> Create New Order
-                    </button>
-                </div>
-            </div>
-
-            {/* Stats Section */}
-            <div className="row mb-30 g-4">
-                <div className="col-md-3">
-                    <div className="bg-white p-24" style={{borderRadius: '10px', border: '1px solid #eee'}}>
-                        <div className="text-muted small fw-bold text-uppercase mb-10">Total Orders</div>
-                        <h2 className="mb-0 fw-bold">{data.stats.totalOrders}</h2>
+        <div style={{marginLeft: '280px', padding: '0', flexGrow: 1, width: 'calc(100% - 280px)'}}>
+            
+            {/* Page Header */}
+            <header style={{ padding: '60px 48px 32px 48px' }} className="animate-fade-in">
+                <div className="d-flex justify-content-between align-items-end mb-40">
+                    <div>
+                        <h1 className="fw-bold mb-8" style={{ fontSize: '36px', color: 'var(--text-main)', letterSpacing: '-0.04em' }}>Orders</h1>
+                        <p className="text-muted mb-0" style={{ fontSize: '16px', fontWeight: '500' }}>Manage customer orders, fulfillment, and sales history.</p>
                     </div>
-                </div>
-                <div className="col-md-3">
-                    <div className="bg-white p-24" style={{borderRadius: '10px', border: '1px solid #eee'}}>
-                        <div className="text-muted small fw-bold text-uppercase mb-10">Today's Orders</div>
-                        <h2 className="mb-0 fw-bold text-success">{data.stats.daily}</h2>
+                    <div className="d-flex align-items-center gap-16">
+                        <button className="btn bg-white shadow-sm border-0 px-24 py-12" onClick={fetchData} 
+                            style={{ borderRadius: 'var(--radius-md)', fontWeight: '600', fontSize: '14px', border: '1px solid var(--border-medium) !important' }}>
+                            <i className="fas fa-sync-alt me-8 text-success"></i> Sync Orders
+                        </button>
+                        <button className="rr-btn px-28 py-12" style={{ borderRadius: 'var(--radius-md)', fontSize: '14px', fontWeight: '700' }} 
+                            onClick={() => { setEditingOrder(null); setItems([{ name: '', quantity: 1 }]); setIsModalOpen(true); }}>
+                            <i className="fas fa-plus me-8"></i> Create Manual Order
+                        </button>
                     </div>
-                </div>
-                <div className="col-md-3">
-                    <div className="bg-white p-24" style={{borderRadius: '10px', border: '1px solid #eee'}}>
-                        <div className="text-muted small fw-bold text-uppercase mb-10">Monthly Volume</div>
-                        <h2 className="mb-0 fw-bold">{data.stats.monthly}</h2>
-                    </div>
-                </div>
-                <div className="col-md-3">
-                    <div className="bg-white p-24" style={{borderRadius: '10px', border: '1px solid #eee'}}>
-                        <div className="text-muted small fw-bold text-uppercase mb-10">Total Sales</div>
-                        <h2 className="mb-0 fw-bold text-success">₹{data.orders.reduce((acc, o) => acc + o.totalAmount, 0).toLocaleString()}</h2>
-                    </div>
-                </div>
-            </div>
-
-            <div className="bg-white p-30" style={{borderRadius: '10px', border: '1px solid #eee'}}>
-                <div className="d-flex justify-content-between align-items-center mb-20">
-                    <h5 className="mb-0 fw-bold">Recent Orders</h5>
-                    <select 
-                        className="form-select form-select-sm" 
-                        style={{width: '150px'}}
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
-                    >
-                        <option value="all">All Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
                 </div>
 
-                <div className="table-responsive">
-                    <table className="table align-middle">
-                        <thead>
-                            <tr>
-                                <th>Order ID</th>
-                                <th>Date</th>
-                                <th>Customer</th>
-                                <th>Items</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                                <th className="text-end">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {loading ? (
-                                <tr><td colSpan="7" className="text-center py-40">Loading orders...</td></tr>
-                            ) : (
-                                filteredOrders.map((order) => (
-                                    <tr key={order.id}>
-                                        <td>
-                                            <Link href={`/dashboard/owner/orders/${order.id}`} className="fw-bold text-decoration-none text-success">
-                                                #{order.id.slice(-6).toUpperCase()}
-                                            </Link>
-                                        </td>
-                                        <td className="text-muted small">{new Date(order.createdAt).toLocaleDateString()}</td>
-                                        <td>
-                                            <strong>{order.customerName}</strong>
-                                            <div className="text-muted x-small">{order.phone}</div>
-                                        </td>
-                                        <td>
-                                            <div className="d-flex flex-wrap gap-1">
-                                                {order.items.map((item, idx) => (
-                                                    <span key={idx} className="badge bg-light text-dark fw-normal border" style={{fontSize: '11px'}}>
-                                                        {item.name} x{item.quantity}
-                                                    </span>
-                                                ))}
+                {/* Stats Section */}
+                <div className="row g-24 mb-40">
+                    <div className="col-md-3">
+                        <div className="ds-card border-0 shadow-sm p-24" style={{borderLeft: '4px solid var(--primary)'}}>
+                            <div className="text-muted small fw-800 text-uppercase mb-12" style={{letterSpacing: '0.05em'}}>Today</div>
+                            <div className="d-flex align-items-end gap-12">
+                                <h2 className="mb-0 fw-800">{data.stats.daily}</h2>
+                                <span className="text-success small fw-700 mb-4">Orders</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-md-3">
+                        <div className="ds-card border-0 shadow-sm p-24" style={{borderLeft: '4px solid #3B82F6'}}>
+                            <div className="text-muted small fw-800 text-uppercase mb-12" style={{letterSpacing: '0.05em'}}>This Month</div>
+                            <div className="d-flex align-items-end gap-12">
+                                <h2 className="mb-0 fw-800">{data.stats.monthly}</h2>
+                                <span className="text-primary small fw-700 mb-4">Volume</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-md-3">
+                        <div className="ds-card border-0 shadow-sm p-24" style={{borderLeft: '4px solid #F59E0B'}}>
+                            <div className="text-muted small fw-800 text-uppercase mb-12" style={{letterSpacing: '0.05em'}}>Total Lifecycle</div>
+                            <div className="d-flex align-items-end gap-12">
+                                <h2 className="mb-0 fw-800">{data.stats.totalOrders}</h2>
+                                <span className="text-warning small fw-700 mb-4">Count</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-md-3">
+                        <div className="ds-card border-0 shadow-sm p-24" style={{borderLeft: '4px solid #8B5CF6'}}>
+                            <div className="text-muted small fw-800 text-uppercase mb-12" style={{letterSpacing: '0.05em'}}>Revenue (INR)</div>
+                            <div className="d-flex align-items-end gap-12">
+                                <h2 className="mb-0 fw-800">₹{data.orders.reduce((acc, o) => acc + o.totalAmount, 0).toLocaleString()}</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Filter Bar */}
+                <div className="d-flex justify-content-between align-items-center p-12 bg-white border shadow-sm" style={{ borderRadius: 'var(--radius-lg)' }}>
+                    <div className="d-flex gap-12 align-items-center ps-8">
+                        <i className="fas fa-filter text-muted small"></i>
+                        <div className="d-flex gap-8">
+                            {['all', 'pending', 'delivered', 'cancelled'].map(s => (
+                                <button 
+                                    key={s}
+                                    onClick={() => setFilter(s)}
+                                    className={`btn btn-sm px-16 py-6 border-0 fw-700 text-uppercase`}
+                                    style={{ 
+                                        borderRadius: '8px', 
+                                        fontSize: '11px',
+                                        backgroundColor: filter === s ? 'var(--primary-light)' : 'transparent',
+                                        color: filter === s ? 'var(--primary-dark)' : 'var(--text-muted)'
+                                    }}
+                                >
+                                    {s}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div style={{ padding: '0 48px 48px 48px' }} className="animate-fade-in">
+                <div className="ds-card p-0 overflow-hidden border-0 shadow-md">
+                    <div className="table-responsive">
+                        <table className="table align-middle mb-0">
+                            <thead>
+                                <tr style={{ backgroundColor: '#F9FAFB' }}>
+                                    <th className="ps-32 py-20 text-uppercase small fw-bold text-muted border-0" style={{ letterSpacing: '0.1em' }}>Order Info</th>
+                                    <th className="py-20 text-uppercase small fw-bold text-muted border-0" style={{ letterSpacing: '0.1em' }}>Customer</th>
+                                    <th className="py-20 text-uppercase small fw-bold text-muted border-0" style={{ letterSpacing: '0.1em' }}>Items</th>
+                                    <th className="py-20 text-uppercase small fw-bold text-muted border-0" style={{ letterSpacing: '0.1em' }}>Amount</th>
+                                    <th className="py-20 text-uppercase small fw-bold text-muted border-0" style={{ letterSpacing: '0.1em' }}>Status</th>
+                                    <th className="pe-32 py-20 text-uppercase small fw-bold text-muted border-0 text-end" style={{ letterSpacing: '0.1em' }}>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="border-top-0">
+                                {loading ? (
+                                    <tr><td colSpan="6" className="text-center py-80"><div className="ds-loader mx-auto"></div></td></tr>
+                                ) : (
+                                    filteredOrders.map((order) => (
+                                        <tr key={order.id} className="hover-row">
+                                            <td className="ps-32 py-20">
+                                                <Link href={`/dashboard/owner/orders/${order.id}`} className="text-decoration-none">
+                                                    <div className="fw-800 text-primary mb-2" style={{ fontSize: '15px' }}>#{order.id.slice(-6).toUpperCase()}</div>
+                                                    <div className="text-muted small">{new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</div>
+                                                </Link>
+                                            </td>
+                                            <td className="py-20">
+                                                <div className="fw-700 text-dark mb-2">{order.customerName}</div>
+                                                <div className="text-muted small">{order.phone}</div>
+                                            </td>
+                                            <td className="py-20">
+                                                <div className="d-flex flex-wrap gap-6">
+                                                    {order.items.slice(0, 2).map((item, idx) => (
+                                                        <span key={idx} className="item-tag">
+                                                            {item.name} <span className="text-muted ms-4">x{item.quantity}</span>
+                                                        </span>
+                                                    ))}
+                                                    {order.items.length > 2 && (
+                                                        <span className="item-tag">+{order.items.length - 2} more</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="py-20 fw-800 text-dark">₹{order.totalAmount.toLocaleString()}</td>
+                                            <td className="py-20">{getStatusBadge(order.status)}</td>
+                                            <td className="pe-32 py-20 text-end">
+                                                <div className="dropdown">
+                                                    <button className="action-circle-btn" data-bs-toggle="dropdown">
+                                                        <i className="fas fa-ellipsis-h"></i>
+                                                    </button>
+                                                    <ul className="dropdown-menu dropdown-menu-end shadow-lg border-0 p-8" style={{borderRadius: '12px'}}>
+                                                        <li><Link className="dropdown-item py-10 px-16 rounded-8 small fw-600" href={`/dashboard/owner/orders/${order.id}`}><i className="fas fa-eye me-8 text-primary"></i> View Details</Link></li>
+                                                        <li><button className="dropdown-item py-10 px-16 rounded-8 small fw-600" onClick={() => handleEdit(order)}><i className="fas fa-pen me-8 text-warning"></i> Edit Order</button></li>
+                                                        <li><hr className="dropdown-divider opacity-10" /></li>
+                                                        <li className="dropdown-header small fw-800 text-uppercase text-muted pt-8 pb-4">Update Status</li>
+                                                        <li><button className="dropdown-item py-8 px-16 rounded-8 small fw-600" onClick={() => handleStatusUpdate(order.id, 'PENDING')}>Mark Pending</button></li>
+                                                        <li><button className="dropdown-item py-8 px-16 rounded-8 small fw-600 text-success" onClick={() => handleStatusUpdate(order.id, 'DELIVERED')}>Mark Delivered</button></li>
+                                                        <li><button className="dropdown-item py-8 px-16 rounded-8 small fw-600 text-danger" onClick={() => handleStatusUpdate(order.id, 'CANCELLED')}>Mark Cancelled</button></li>
+                                                        <li><hr className="dropdown-divider opacity-10" /></li>
+                                                        <li><button className="dropdown-item py-10 px-16 rounded-8 small fw-600 text-danger" onClick={() => handleDelete(order.id)}><i className="fas fa-trash-can me-8"></i> Delete Order</button></li>
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                                {!loading && filteredOrders.length === 0 && (
+                                    <tr>
+                                        <td colSpan="6" className="text-center py-80">
+                                            <div className="mb-20 text-muted opacity-20">
+                                                <i className="fas fa-shopping-bag fa-5x"></i>
                                             </div>
-                                        </td>
-                                        <td className="fw-bold">₹{order.totalAmount.toLocaleString()}</td>
-                                        <td>{getStatusBadge(order.status)}</td>
-                                        <td className="text-end">
-                                            <div className="dropdown d-inline-block">
-                                                <button className="btn btn-sm btn-light" data-bs-toggle="dropdown">
-                                                    <i className="fas fa-ellipsis-v"></i>
-                                                </button>
-                                                <ul className="dropdown-menu shadow border-0">
-                                                    <li><Link className="dropdown-item" href={`/dashboard/owner/orders/${order.id}`}><i className="fas fa-eye me-2"></i> View</Link></li>
-                                                    <li><button className="dropdown-item" onClick={() => handleEdit(order)}><i className="fas fa-edit me-2"></i> Edit</button></li>
-                                                    <li><hr className="dropdown-divider" /></li>
-                                                    <li><button className="dropdown-item" onClick={() => handleStatusUpdate(order.id, 'PENDING')}>Set Pending</button></li>
-                                                    <li><button className="dropdown-item text-success" onClick={() => handleStatusUpdate(order.id, 'DELIVERED')}>Set Delivered</button></li>
-                                                    <li><button className="dropdown-item text-danger" onClick={() => handleStatusUpdate(order.id, 'CANCELLED')}>Set Cancelled</button></li>
-                                                    <li><hr className="dropdown-divider" /></li>
-                                                    <li><button className="dropdown-item text-danger" onClick={() => handleDelete(order.id)}><i className="fas fa-trash me-2"></i> Delete</button></li>
-                                                </ul>
-                                            </div>
+                                            <h5 className="fw-bold mb-8">No Orders Found</h5>
+                                            <p className="text-muted">You haven't received any orders yet.</p>
                                         </td>
                                     </tr>
-                                ))
-                            )}
-                            {!loading && filteredOrders.length === 0 && (
-                                <tr><td colSpan="7" className="text-center py-40 text-muted">No orders found.</td></tr>
-                            )}
-                        </tbody>
-                    </table>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <style jsx>{`
+            .hover-row:hover { background-color: #FAFBFC; }
+            .item-tag {
+                padding: 4px 10px;
+                background-color: #F3F4F6;
+                border-radius: 8px;
+                font-size: 11px;
+                font-weight: 700;
+                color: #374151;
+                border: 1px solid var(--border-medium);
+            }
+            .action-circle-btn {
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid var(--border-medium);
+                background-color: white;
+                color: var(--text-muted);
+                transition: 0.2s;
+            }
+            .action-circle-btn:hover {
+                background-color: var(--bg-main);
+                color: var(--primary);
+                border-color: var(--primary);
+            }
+            .cursor-pointer { cursor: pointer; }
+            .hover-bg-light:hover { background-color: var(--bg-main); }
+            .rounded-10 { border-radius: 10px; }
+        `}</style>
+
+        {/* Premium Order Modal */}
+        {isModalOpen && (
+            <div style={{
+                position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                backgroundColor: 'rgba(17, 24, 39, 0.7)', zIndex: 9999, display: 'flex',
+                alignItems: 'center', justifyContent: 'center', padding: '20px',
+                backdropFilter: 'blur(8px)'
+            }} className="animate-fade-in">
+                <div style={{
+                    backgroundColor: 'white', maxWidth: '700px', width: '100%', 
+                    borderRadius: 'var(--radius-xl)', padding: '48px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+                    position: 'relative', maxHeight: '90vh', overflowY: 'auto'
+                }}>
+                    <button onClick={() => setIsModalOpen(false)} style={{
+                        position: 'absolute', top: '30px', right: '30px', border: 'none', 
+                        background: '#F3F4F6', width: '40px', height: '40px', borderRadius: '50%',
+                        fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: 'var(--text-muted)'
+                    }}><i className="fas fa-times"></i></button>
+
+                    <div className="mb-40">
+                        <h2 className="mb-8" style={{fontSize: '28px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.03em'}}>
+                            {editingOrder ? 'Edit Order' : 'New Manual Order'}
+                        </h2>
+                        <p className="text-muted fw-500">Capture customer details and items for this order.</p>
+                    </div>
+
+                    <form onSubmit={handleSubmit}>
+                        <div className="row g-24 mb-32">
+                            <div className="col-md-6">
+                                <label className="form-label small fw-800 text-muted text-uppercase mb-12 d-block">Customer Name</label>
+                                <input name="customerName" type="text" required defaultValue={editingOrder?.customerName} 
+                                    className="form-control px-20 py-14"
+                                    style={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', backgroundColor: '#F9FAFB', fontSize: '15px' }}
+                                    placeholder="e.g. Rahul Sharma" />
+                            </div>
+                            <div className="col-md-6">
+                                <label className="form-label small fw-800 text-muted text-uppercase mb-12 d-block">Contact Number</label>
+                                <input name="phone" type="text" required defaultValue={editingOrder?.phone} 
+                                    className="form-control px-20 py-14"
+                                    style={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', backgroundColor: '#F9FAFB', fontSize: '15px' }}
+                                    placeholder="10-digit number" />
+                            </div>
+                            <div className="col-12">
+                                <label className="form-label small fw-800 text-muted text-uppercase mb-12 d-block">Delivery Address</label>
+                                <textarea name="address" rows="2" defaultValue={editingOrder?.address}
+                                    className="form-control px-20 py-14"
+                                    style={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', backgroundColor: '#F9FAFB', fontSize: '15px', resize: 'none' }}
+                                    placeholder="Full street address..."></textarea>
+                            </div>
+                        </div>
+
+                        <div className="mb-32 p-32" style={{backgroundColor: '#F9FAFB', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-medium)'}}>
+                            <div className="d-flex justify-content-between align-items-center mb-24">
+                                <label className="form-label small fw-800 text-muted text-uppercase mb-0">Order Items</label>
+                                <button type="button" className="btn btn-sm bg-white shadow-sm border px-16 py-8 fw-700 text-success" onClick={addItem} style={{borderRadius: '10px'}}>
+                                    <i className="fas fa-plus me-8"></i> Add Item
+                                </button>
+                            </div>
+                            
+                            <div className="d-flex flex-column gap-12">
+                                {items.map((item, index) => (
+                                    <div key={index} className="d-flex gap-12 align-items-start">
+                                         <div className="flex-grow-1 position-relative">
+                                             <input 
+                                                 type="text" 
+                                                 className="form-control px-16 py-12" 
+                                                 placeholder={`Item name (e.g. ${store?.category === 'Bakery' ? 'Pastry' : 'Rice'})`} 
+                                                 value={item.name} 
+                                                 onChange={(e) => handleSearch(index, e.target.value)}
+                                                 style={{padding: '10px 12px', borderRadius: '12px', fontSize: '14px', border: '1px solid var(--border-medium)'}}
+                                                 autoComplete="off"
+                                             />
+                                             {suggestions[index]?.length > 0 && (
+                                                 <div className="position-absolute w-100 bg-white shadow-xl border-0 rounded-12 mt-4 overflow-hidden" style={{zIndex: 100, top: '100%'}}>
+                                                     {suggestions[index].map(p => (
+                                                         <div 
+                                                             key={p.id} 
+                                                             className="px-20 py-12 cursor-pointer hover-bg-light border-bottom last-border-0"
+                                                             onClick={() => selectSuggestion(index, p)}
+                                                         >
+                                                             <div className="fw-700 text-dark small">{p.name}</div>
+                                                             <div className="text-muted" style={{fontSize: '11px'}}>Price: ₹{p.price}</div>
+                                                         </div>
+                                                     ))}
+                                                 </div>
+                                             )}
+                                         </div>
+                                        <div style={{width: '90px'}}>
+                                            <input 
+                                                type="number" 
+                                                className="form-control px-12 py-12 text-center" 
+                                                value={item.quantity} 
+                                                onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value))}
+                                                style={{borderRadius: '12px', fontSize: '14px', border: '1px solid var(--border-medium)'}}
+                                            />
+                                        </div>
+                                        {items.length > 1 && (
+                                            <button type="button" className="btn text-danger px-8 py-12" onClick={() => removeItem(index)}>
+                                                <i className="fas fa-trash-can"></i>
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="row justify-content-end mb-40">
+                            <div className="col-md-6">
+                                <label className="form-label small fw-800 text-muted text-uppercase mb-12 d-block">Grand Total (₹)</label>
+                                <div className="input-group">
+                                    <span className="input-group-text bg-light border-0 fw-800" style={{borderRadius: '12px 0 0 12px'}}>₹</span>
+                                    <input name="totalAmount" type="number" step="0.01" required defaultValue={editingOrder?.totalAmount}
+                                        className="form-control px-20 py-14 border-0"
+                                        style={{ backgroundColor: '#F3F4F6', fontSize: '18px', fontWeight: '800', borderRadius: '0 12px 12px 0' }} 
+                                        placeholder="0.00" />
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="d-flex gap-16">
+                            <button type="submit" className="rr-btn flex-grow-1 py-18" style={{borderRadius: '16px', fontSize: '16px', fontWeight: '800'}}>
+                                {editingOrder ? 'Update Order Details' : 'Generate Manual Order'}
+                            </button>
+                            <button type="button" onClick={() => setIsModalOpen(false)} 
+                                className="btn btn-white px-32"
+                                style={{borderRadius: '16px', fontWeight: '700', border: '1px solid var(--border-medium)', color: 'var(--text-muted)'}}>
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        )}
+    </div>
+  );
 
 
 
@@ -359,16 +597,32 @@ export default function OrdersPage() {
                             <div className="items-list" style={{maxHeight: '200px', overflowY: 'auto', paddingRight: '5px'}}>
                                 {items.map((item, index) => (
                                     <div key={index} className="d-flex gap-3 mb-12 align-items-center">
-                                        <div className="flex-grow-1">
-                                            <input 
-                                                type="text" 
-                                                className="form-control form-control-sm" 
-                                                placeholder="Item name (e.g. Basmati Rice)" 
-                                                value={item.name} 
-                                                onChange={(e) => updateItem(index, 'name', e.target.value)}
-                                                style={{padding: '10px 12px', borderRadius: '10px', fontSize: '14px'}}
-                                            />
-                                        </div>
+                                         <div className="flex-grow-1 position-relative">
+                                             <input 
+                                                 type="text" 
+                                                 className="form-control form-control-sm" 
+                                                 placeholder={`Item name (e.g. ${store?.category === 'Bakery' ? 'Chocolate Cake' : 'Basmati Rice'})`} 
+                                                 value={item.name} 
+                                                 onChange={(e) => handleSearch(index, e.target.value)}
+                                                 style={{padding: '10px 12px', borderRadius: '10px', fontSize: '14px'}}
+                                                 autoComplete="off"
+                                             />
+                                             {suggestions[index]?.length > 0 && (
+                                                 <div className="position-absolute w-100 bg-white shadow-sm border rounded-10 mt-1" style={{zIndex: 10, top: '100%'}}>
+                                                     {suggestions[index].map(p => (
+                                                         <div 
+                                                             key={p.id} 
+                                                             className="px-15 py-10 cursor-pointer hover-bg-light small"
+                                                             onClick={() => selectSuggestion(index, p)}
+                                                             style={{cursor: 'pointer'}}
+                                                         >
+                                                             <div className="fw-bold">{p.name}</div>
+                                                             <div className="text-muted" style={{fontSize: '11px'}}>₹{p.price}</div>
+                                                         </div>
+                                                     ))}
+                                                 </div>
+                                             )}
+                                         </div>
                                         <div style={{width: '100px'}}>
                                             <input 
                                                 type="number" 

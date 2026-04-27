@@ -12,17 +12,20 @@ export default function Products({ store, products }) {
   };
 
   const sendWhatsAppOrder = () => {
-    const text = `New Order from Dukkan Setu Store: ${store.name}\n\n` +
-                 `Product: ${selectedProduct.name}\n` +
-                 `Quantity: ${customerInfo.quantity}\n` +
-                 `Price: ₹${selectedProduct.price * customerInfo.quantity}\n\n` +
-                 `Customer Details:\n` +
-                 `Name: ${customerInfo.name}\n` +
-                 `Phone: ${customerInfo.phone}\n` +
-                 `Address: ${customerInfo.address}\n\n` +
-                 `Please confirm the order!`;
+    const total = selectedProduct.price * customerInfo.quantity;
+    const text = `🛍️ *New Order Received!* 🛍️\n\n` +
+                 `🏪 *Store:* ${store.name}\n` +
+                 `📦 *Product:* ${selectedProduct.name}\n` +
+                 `🔢 *Quantity:* ${customerInfo.quantity}\n` +
+                 `💰 *Total Amount:* ₹${total.toLocaleString()}\n\n` +
+                 `👤 *Customer Details:* \n` +
+                 `• *Name:* ${customerInfo.name}\n` +
+                 `• *Phone:* ${customerInfo.phone}\n` +
+                 `• *Address:* ${customerInfo.address}\n\n` +
+                 `✅ _Please confirm this order to proceed!_`;
+                 
     const encodedText = encodeURIComponent(text);
-    const whatsappUrl = `https://wa.me/${store.phone}?text=${encodedText}`;
+    const whatsappUrl = `https://wa.me/${store.phone.replace(/\D/g, '')}?text=${encodedText}`;
     window.open(whatsappUrl, '_blank');
     setIsModalOpen(false);
   };

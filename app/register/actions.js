@@ -1,5 +1,6 @@
 'use server';
 import prisma from '@/lib/prisma';
+import { handleFileUpload } from '@/lib/upload';
 
 export async function registerStore(formData) {
     try {
@@ -29,11 +30,13 @@ export async function registerStore(formData) {
         const baseSlug = storeName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, '');
         const slug = `${baseSlug}-${Math.floor(Math.random() * 10000)}`;
 
-        // File names (simulated upload)
-        const businessProofUrl = formData.get('businessProof')?.name || null;
-        const shopFrontUrl = formData.get('shopFront')?.name || null;
-        const shopInteriorUrl = formData.get('shopInterior')?.name || null;
-        const ownerIdProofUrl = formData.get('ownerIdProof')?.name || null;
+        // Proper File Uploading
+        const [businessProofUrl, shopFrontUrl, shopInteriorUrl, ownerIdProofUrl] = await Promise.all([
+            handleFileUpload(formData.get('businessProof')),
+            handleFileUpload(formData.get('shopFront')),
+            handleFileUpload(formData.get('shopInterior')),
+            handleFileUpload(formData.get('ownerIdProof'))
+        ]);
 
         // 1. Create the store with detailed info
         const store = await prisma.store.create({
