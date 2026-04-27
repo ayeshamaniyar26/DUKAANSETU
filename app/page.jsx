@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import prisma from '@/lib/prisma';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Banner from '@/components/Banner';
@@ -26,6 +27,13 @@ export default function Home() {
     accentColor: '#2E7D32'
   };
 
+  // Fetch real stores from the database for the showcase section
+  const featuredStores = await prisma.store.findMany({
+    where: { status: 'APPROVED' },
+    take: 3,
+    orderBy: { createdAt: 'desc' }
+  });
+
   return (
     <>
       <SearchPopup />
@@ -43,63 +51,40 @@ export default function Home() {
         {/* About the platform */}
         <About store={platformStore} />
 
-        {/* Showcase Stores (Success Stories) - Moved here */}
-        <section className="latest-project section-space">
-            <div className="container">
-                <div className="row mb-60 align-items-center">
-                    <div className="col-xl-7">
-                        <div className="section__title-wrapper">
-                            <span className="section__subtitle justify-content-start mb-13"><span data-width="40px" className="left-separetor"></span>Our Success Stories</span>
-                            <h2 className="section__title title-animation text-capitalize mb-0">Trusted By Local <br /> Legends Nationwide</h2>
-                        </div>
-                    </div>
-                </div>
-                <div className="row grid mb-minus-30">
-                    <div className="col-lg-4 col-md-6 grid-item">
-                        <div className="latest-project__item mb-30">
-                            <div className="latest-project__item-thumb">
-                                <img src="/assets/imgs/latest-project/latest-project__item-1.png" alt="" />
-                            </div>
-                            <div className="latest-project__item-content">
-                                <div className="text">
-                                    <span className="subtitle color-white d-block">Grocery Mega-Store</span>
-                                    <h4 className="title color-white mb-20">Kirana Global</h4>
-                                    <Link href="/shop/kirana-global" className="explore-store-btn">Explore Our Products</Link>
+        {/* Showcase Stores (Success Stories) - Now Dynamic */}
+        {featuredStores.length > 0 && (
+          <section className="latest-project section-space">
+              <div className="container">
+                  <div className="row mb-60 align-items-center">
+                      <div className="col-xl-7">
+                          <div className="section__title-wrapper">
+                              <span className="section__subtitle justify-content-start mb-13"><span data-width="40px" className="left-separetor"></span>Our Success Stories</span>
+                              <h2 className="section__title title-animation text-capitalize mb-0">Trusted By Local <br /> Legends Nationwide</h2>
+                          </div>
+                      </div>
+                  </div>
+                  <div className="row grid mb-minus-30">
+                      {featuredStores.map((store, index) => (
+                        <div key={store.id} className="col-lg-4 col-md-6 grid-item">
+                            <div className="latest-project__item mb-30">
+                                <div className="latest-project__item-thumb">
+                                    <img src={store.shopFrontUrl || `/assets/imgs/latest-project/latest-project__item-${index + 1}.png`} alt={store.name} 
+                                      style={{ height: '400px', objectFit: 'cover', width: '100%' }} />
+                                </div>
+                                <div className="latest-project__item-content">
+                                    <div className="text">
+                                        <span className="subtitle color-white d-block">{store.category || 'Local Business'}</span>
+                                        <h4 className="title color-white mb-20">{store.name}</h4>
+                                        <Link href={`/shop/${store.slug}`} className="explore-store-btn">Explore Our Products</Link>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div className="col-lg-4 col-md-6 grid-item">
-                        <div className="latest-project__item mb-30">
-                            <div className="latest-project__item-thumb">
-                                <img src="/assets/imgs/latest-project/latest-project__item-2.png" alt="" />
-                            </div>
-                            <div className="latest-project__item-content">
-                                <div className="text">
-                                    <span className="subtitle color-white d-block">Boutique Fashion</span>
-                                    <h4 className="title color-white mb-20">Style Hub Fashion</h4>
-                                    <Link href="/shop/fashion-hub" className="explore-store-btn">Explore Our Products</Link>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-lg-4 col-md-6 grid-item">
-                        <div className="latest-project__item mb-30">
-                            <div className="latest-project__item-thumb">
-                                <img src="/assets/imgs/latest-project/latest-project__item-3.png" alt="" />
-                            </div>
-                            <div className="latest-project__item-content">
-                                <div className="text">
-                                    <span className="subtitle color-white d-block">Pharmacy</span>
-                                    <h4 className="title color-white mb-20">Health First Pharmacy</h4>
-                                    <Link href="/shop/health-first" className="explore-store-btn">Explore Our Products</Link>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+                      ))}
+                  </div>
+              </div>
+          </section>
+        )}
 
         {/* Core SaaS Services */}
         <section className="what-we-do section-space section-bg-2 overflow-hidden">
