@@ -8,7 +8,10 @@ export default function ContactPage() {
     const platformStore = {
         name: 'Dukkan Setu',
         slug: 'platform',
-        phone: '+91 90000 00000',
+        phone: '7483192591',
+        email: 'ayeshamaniyar2601@gmail.com',
+        altPhone: '7829747061',
+        altEmail: 'kaifsherdi19@gmail.com',
         category: 'SaaS Platform',
         logo: '/assets/imgs/logo/logo.svg',
         accentColor: '#2E7D32'
@@ -57,7 +60,7 @@ export default function ContactPage() {
                                         <i className="fas fa-envelope fa-3x" style={{color: '#2E7D32'}}></i>
                                     </div>
                                     <h4 className="fw-bold mb-10">Email Address</h4>
-                                    <p className="text-muted mb-0">support@dukaansetu.com<br/>info@dukaansetu.com</p>
+                                    <p className="text-muted mb-0">{platformStore.email}<br/>{platformStore.altEmail}</p>
                                 </div>
                             </div>
                             <div className="col-lg-4">
@@ -66,7 +69,7 @@ export default function ContactPage() {
                                         <i className="fas fa-phone-alt fa-3x" style={{color: '#2E7D32'}}></i>
                                     </div>
                                     <h4 className="fw-bold mb-10">Phone Number</h4>
-                                    <p className="text-muted mb-0">+91 90000 00000<br/>+91 91122 33445</p>
+                                    <p className="text-muted mb-0">{platformStore.phone}<br/>{platformStore.altPhone}</p>
                                 </div>
                             </div>
                         </div>
