@@ -21,7 +21,10 @@ export default function Home() {
   const platformStore = {
     name: 'Dukkan Setu',
     slug: 'platform',
-    phone: '+91 90000 00000',
+    phone: '7483192591',
+    email: 'ayeshamaniyar2601@gmail.com',
+    altPhone: '7829747061',
+    altEmail: 'kaifsherdi19@gmail.com',
     category: 'SaaS Platform',
     logo: '/assets/imgs/logo/logo.svg',
     accentColor: '#2E7D32'

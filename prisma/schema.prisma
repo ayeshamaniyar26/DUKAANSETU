@@ -110,3 +110,12 @@ model User {
   role      String @default("OWNER") // ADMIN, OWNER, MANAGER
   storeId   String?
 }
+
+model Inquiry {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  message   String
+  status    String   @default("PENDING") // PENDING, RESPONDED
+  createdAt DateTime @default(now())
+}

@@ -10,7 +10,8 @@ export default function ContactList({ store }) {
                             </div>
                             <div className="contact-list__item-text">
                                 <h4 className="title">Phone Number</h4>
-                                <a href={`tel:${store.phone}`}>{store.phone}</a>
+                                <a href={`tel:${store.phone}`}>{store.phone}</a><br/>
+                                {store.altPhone && <a href={`tel:${store.altPhone}`}>{store.altPhone}</a>}
                             </div>
                         </div>
                     </div>
@@ -21,7 +22,8 @@ export default function ContactList({ store }) {
                             </div>
                             <div className="contact-list__item-text">
                                 <h4 className="title">Email Address</h4>
-                                <a href="mailto:support@dukkansetu.com">Inquiry Support</a>
+                                <a href={`mailto:${store.email || 'ayeshamaniyar2601@gmail.com'}`}>{store.email || 'ayeshamaniyar2601@gmail.com'}</a><br/>
+                                {store.altEmail && <a href={`mailto:${store.altEmail}`}>{store.altEmail}</a>}
                             </div>
                         </div>
                     </div>

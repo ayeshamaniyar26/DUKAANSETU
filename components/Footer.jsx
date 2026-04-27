@@ -41,11 +41,17 @@ export default function Footer({ store }) {
                                 <ul className="footer__contact color-white">
                                     <li>
                                         <div className="icon"><i className="fas fa-phone-alt"></i></div>
-                                        <div className="text"><a href={`tel:${store.phone}`}>{store.phone}</a></div>
+                                        <div className="text">
+                                            <a href={`tel:${store.phone}`}>{store.phone}</a>
+                                            {store.altPhone && <><br/><a href={`tel:${store.altPhone}`}>{store.altPhone}</a></>}
+                                        </div>
                                     </li>
                                     <li>
                                         <div className="icon"><i className="fas fa-envelope"></i></div>
-                                        <div className="text"><a href="mailto:support@dukkansetu.com">support@dukkansetu.com</a></div>
+                                        <div className="text">
+                                            <a href={`mailto:${store.email || 'ayeshamaniyar2601@gmail.com'}`}>{store.email || 'ayeshamaniyar2601@gmail.com'}</a>
+                                            {store.altEmail && <><br/><a href={`mailto:${store.altEmail}`}>{store.altEmail}</a></>}
+                                        </div>
                                     </li>
                                     <li>
                                         <div className="icon"><i className="fas fa-map-marker-alt"></i></div>

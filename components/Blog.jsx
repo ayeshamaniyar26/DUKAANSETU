@@ -1,4 +1,7 @@
 export default function Blog({ store }) {
+    const currentMonth = new Date().toLocaleString('default', { month: 'short' });
+    const currentYear = new Date().getFullYear();
+
     return (
         <section className="blog section-space">
             <div className="container">
@@ -18,7 +21,7 @@ export default function Blog({ store }) {
                                 <img src="/images/gallery-1.png" alt="" className="img-fluid" />
                             </div>
                             <div className="blog__item-text">
-                                <span className="d-block mb-10"><i className="fa-regular fa-calendar-days text-primary"></i> 26 Jan, 2024</span>
+                                <span className="d-block mb-10"><i className="fa-regular fa-calendar-days text-primary"></i> 26 {currentMonth}, {currentYear}</span>
                                 <h4 className="blog__item-title mb-25 rr-fw-bold text-capitalize">Monthly Ration Discounts Now Live!</h4>
                                 <p>Get up to 20% off on bulk purchase of Atta and Rice this month.</p>
                             </div>
@@ -30,7 +33,7 @@ export default function Blog({ store }) {
                                 <img src="/images/delivery.png" alt="" className="img-fluid" />
                             </div>
                             <div className="blog__item-text">
-                                <span className="d-block mb-10"><i className="fa-regular fa-calendar-days text-primary"></i> 20 Jan, 2024</span>
+                                <span className="d-block mb-10"><i className="fa-regular fa-calendar-days text-primary"></i> 20 {currentMonth}, {currentYear}</span>
                                 <h4 className="blog__item-title mb-25 rr-fw-bold text-capitalize">New Arrival: Organic Honey</h4>
                                 <p>We now stock 100% pure organic honey sourced from local farms.</p>
                             </div>
@@ -42,7 +45,7 @@ export default function Blog({ store }) {
                                 <img src="/images/gallery-3.png" alt="" className="img-fluid" />
                             </div>
                             <div className="blog__item-text">
-                                <span className="d-block mb-10"><i className="fa-regular fa-calendar-days text-primary"></i> 15 Jan, 2024</span>
+                                <span className="d-block mb-10"><i className="fa-regular fa-calendar-days text-primary"></i> 15 {currentMonth}, {currentYear}</span>
                                 <h4 className="blog__item-title mb-25 rr-fw-bold text-capitalize">Free Home Delivery Update</h4>
                                 <p>Minimum order value for free delivery reduced to ₹499 only.</p>
                             </div>
