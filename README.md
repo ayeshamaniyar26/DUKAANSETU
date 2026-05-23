@@ -69,14 +69,14 @@ Mobile-first design using **Inter + Outfit** Google Fonts, custom CSS design tok
 
 ## 🏬 Live Partner Shops
 
-| Store | Category | Location | Link |
-|-------|----------|----------|------|
-| 🥐 Fresh Bites Bakery | Bakery | Hubballi, Karnataka | [Visit Store](https://dukaansetu-xi.vercel.app/shop/fresh-bites) |
-| ⚡ Electro Hive | Electronics | Bangalore, Karnataka | [Visit Store](https://dukaansetu-xi.vercel.app/shop/electro-hive) |
-| 👗 Fashion Fiesta | Fashion | New Delhi, Delhi | [Visit Store](https://dukaansetu-xi.vercel.app/shop/fashion-fiesta) |
-| 🛒 Modern Supermart | Kirana/Grocery | Kolkata, West Bengal | [Visit Store](https://dukaansetu-xi.vercel.app/shop/modern-supermart) |
-| 💊 NovaCare Pharmacy | Medical/Pharmacy | Hubballi, Karnataka | [Visit Store](https://dukaansetu-xi.vercel.app/shop/nova-care) |
-| 🥦 Kirana King | Kirana/Grocery | Hubballi, Karnataka | [Visit Store](https://dukaansetu-xi.vercel.app/shop/kirana-king) |
+| Store | Category | Location |
+|-------|----------|----------|
+| 🥐 Fresh Bites Bakery | Bakery | Hubballi, Karnataka |
+| ⚡ Electro Hive | Electronics | Bangalore, Karnataka |
+| 👗 Fashion Fiesta | Fashion | New Delhi, Delhi |
+| 🛒 Modern Supermart | Kirana/Grocery | Kolkata, West Bengal |
+| 💊 NovaCare Pharmacy | Medical/Pharmacy | Hubballi, Karnataka |
+| 🥦 Kirana King | Kirana/Grocery | Hubballi, Karnataka |
 
 ---
 ## 🖼️ App Screenshots
@@ -93,8 +93,6 @@ Mobile-first design using **Inter + Outfit** Google Fonts, custom CSS design tok
 ### 📝 Merchant Registration
 ![Register](public/images/screenshots/images/register.png)
 
-### 🔐 Merchant Login
-*(No login screenshot found — add if available)*
 
 ### 🏪 Store Storefront — Kirana King
 ![Store](public/images/screenshots/images/kirana_store_1.png)
